@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1780" height="1180" viewBox="0 0 1780 1180"><defs><marker id="end" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 10 5 0 10z" fill="#708090"/></marker><style>text{font-family:Arial,'DejaVu Sans',sans-serif;fill:#17324D}.uc{fill:#F8FCFF;stroke:#286192;stroke-width:2}.assoc{stroke:#8392A4;stroke-width:1.3;opacity:.75;fill:none}.dep{stroke:#6B7E8F;stroke-width:1.9;stroke-dasharray:7 5;fill:none;marker-end:url(#end)}.head{font-weight:700;font-size:24px}.section{font-size:18px;font-weight:700;fill:#3D607D}.txt{font-size:16px;text-anchor:middle;dominant-baseline:middle}.act{stroke:#263E57;stroke-width:2;fill:none}.cap{font-size:14px;fill:#607487}</style></defs>
+<rect width="1780" height="1180" fill="#fff"/>
+<text x="890" y="42" text-anchor="middle" class="head">BrewLite — Use-case tổng quát (bản đồng bộ Task 1.2)</text>
+<rect x="210" y="62" width="1340" height="1070" rx="8" fill="#F3F9FD" stroke="#40647E" stroke-width="2"/>
+<text x="880" y="94" text-anchor="middle" font-weight="700" font-size="18">BrewLite System</text>
+<rect x="232" y="114" width="420" height="997" fill="#fff" stroke="#DFEAF2"/><text x="442.0" y="145" class="section" text-anchor="middle">Chức năng khách hàng</text>
+<rect x="665" y="114" width="425" height="997" fill="#fff" stroke="#DFEAF2"/><text x="877.5" y="145" class="section" text-anchor="middle">Checkout &amp; thanh toán</text>
+<rect x="1103" y="114" width="425" height="997" fill="#fff" stroke="#DFEAF2"/><text x="1315.5" y="145" class="section" text-anchor="middle">Vận hành &amp; quản lý</text>
+<path class="assoc" d="M 146 435 L 297 215"/>
+<path class="assoc" d="M 146 435 L 297 308"/>
+<path class="assoc" d="M 146 435 L 297 401"/>
+<path class="assoc" d="M 146 435 L 297 494"/>
+<path class="assoc" d="M 146 435 L 297 587"/>
+<path class="assoc" d="M 146 435 L 297 680"/>
+<path class="assoc" d="M 146 435 L 297 866"/>
+<path class="assoc" d="M 146 435 L 297 960"/>
+<path class="assoc" d="M 146 435 L 731 284"/>
+<path class="assoc" d="M 1623 300 L 1457 280"/>
+<path class="assoc" d="M 1623 300 L 587 680"/>
+<path class="assoc" d="M 1623 640 L 1457 536"/>
+<path class="assoc" d="M 1623 640 L 1457 665"/>
+<path class="assoc" d="M 1623 640 L 1457 793"/>
+<path class="assoc" d="M 1623 640 L 587 680"/>
+<path class="assoc" d="M 1623 948 L 1021 876"/>
+<path class="dep" d="M876 318 L876 602"/><text x="893" y="601" class="cap">«include»</text>
+<path class="dep" d="M922 315 L990 715 L925 725"/><text x="987" y="700" class="cap">«include»</text>
+<path class="dep" d="M934 315 L1045 842 L931 857"/><text x="1049" y="840" class="cap">«include»</text>
+<path class="dep" d="M846 373 L862 317"/><text x="741" y="366" class="cap">«extend» [có mã]</text>
+<path class="dep" d="M907 479 L894 318"/><text x="927" y="489" class="cap">«extend» [dùng điểm]</text>
+<ellipse class="uc" cx="442" cy="215" rx="145" ry="36"/><text class="txt" x="442" y="215">Xem thực đơn</text>
+<ellipse class="uc" cx="442" cy="308" rx="145" ry="36"/><text class="txt" x="442" y="308">Xem chi tiết sản phẩm</text>
+<ellipse class="uc" cx="442" cy="401" rx="145" ry="36"/><text class="txt" x="442" y="401">Chọn size / topping</text>
+<ellipse class="uc" cx="442" cy="494" rx="145" ry="36"/><text class="txt" x="442" y="494">Quản lý giỏ hàng</text>
+<ellipse class="uc" cx="442" cy="587" rx="154" ry="36"/><text class="txt" x="442" y="587">Đăng ký / OTP / đặt mật khẩu</text>
+<ellipse class="uc" cx="442" cy="680" rx="145" ry="36"/><text class="txt" x="442" y="680">Đăng nhập / đăng xuất</text>
+<ellipse class="uc" cx="442" cy="866" rx="145" ry="36"/><text class="txt" x="442" y="866">Xem lịch sử đơn</text>
+<ellipse class="uc" cx="442" cy="960" rx="145" ry="36"/><text class="txt" x="442" y="960">Theo dõi trạng thái đơn</text>
+<ellipse class="uc" cx="876" cy="284" rx="145" ry="36"/><text class="txt" x="876" y="284">Đặt và thanh toán đơn</text>
+<ellipse class="uc" cx="876" cy="403" rx="145" ry="36"/><text class="txt" x="876" y="403">Áp dụng mã giảm giá</text>
+<ellipse class="uc" cx="876" cy="510" rx="145" ry="36"/><text class="txt" x="876" y="510">Dùng điểm thưởng</text>
+<ellipse class="uc" cx="876" cy="633" rx="145" ry="36"/><text class="txt" x="876" y="633">Kiểm tra tồn kho</text>
+<ellipse class="uc" cx="876" cy="744" rx="145" ry="36"/><text class="txt" x="876" y="744">Tạo đơn chờ thanh toán</text>
+<ellipse class="uc" cx="876" cy="876" rx="145" ry="36"/><text class="txt" x="876" y="876">Thanh toán mô phỏng</text>
+<ellipse class="uc" cx="1312" cy="280" rx="154" ry="36"/><text class="txt" x="1312" y="280">Nhân viên: quản lý đơn</text>
+<ellipse class="uc" cx="1312" cy="536" rx="145" ry="36"/><text class="txt" x="1312" y="536">Chủ: quản lý thực đơn</text>
+<ellipse class="uc" cx="1312" cy="665" rx="154" ry="36"/><text class="txt" x="1312" y="665">Chủ: quản lý khuyến mãi</text>
+<ellipse class="uc" cx="1312" cy="793" rx="154" ry="36"/><text class="txt" x="1312" y="793">Chủ: quản lý người dùng</text>
+<circle class="act" cx="120" cy="340" r="13"/><path class="act" d="M120 353 V400 M93 373 H147 M120 400 L95 428 M120 400 L145 428"/><text x="120" y="449" class="txt">Khách hàng</text>
+<circle class="act" cx="1660" cy="205" r="13"/><path class="act" d="M1660 218 V265 M1633 238 H1687 M1660 265 L1635 293 M1660 265 L1685 293"/><text x="1660" y="314" class="txt">Nhân viên</text>
+<circle class="act" cx="1660" cy="545" r="13"/><path class="act" d="M1660 558 V605 M1633 578 H1687 M1660 605 L1635 633 M1660 605 L1685 633"/><text x="1660" y="654" class="txt">Chủ cửa hàng</text>
+<circle class="act" cx="1660" cy="853" r="13"/><path class="act" d="M1660 866 V913 M1633 886 H1687 M1660 913 L1635 941 M1660 913 L1685 941"/><text x="1660" y="962" class="txt">Cổng thanh toán</text>
+<text x="890" y="1162" text-anchor="middle" class="cap">Bản SVG minh họa tương ứng nguồn PlantUML. Chức năng nội bộ như JWT, transaction, callback sẽ biểu diễn ở Activity/Sequence.</text>
+</svg>
