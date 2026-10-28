@@ -1,0 +1,69 @@
+@startuml
+left to right direction
+skinparam defaultFontName Arial
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam usecaseBackgroundColor #F4FAFF
+skinparam usecaseBorderColor #35567C
+skinparam actorBorderColor #333333
+
+actor "Khách hàng" as C
+actor "Nhân viên pha chế" as S
+actor "Chủ cửa hàng" as O
+actor "Cổng thanh toán\nmô phỏng" as P
+
+rectangle "BrewLite System — MVP Assignment 2" {
+  usecase "Xem thực đơn" as UC01
+  usecase "Xem chi tiết sản phẩm" as UC02
+  usecase "Chọn size/topping" as UC03
+  usecase "Quản lý giỏ hàng" as UC04
+  usecase "Đăng ký/OTP và\nthiết lập mật khẩu" as UC05
+  usecase "Đăng nhập" as UC06
+  usecase "Đăng xuất" as UC07
+  usecase "Đặt và thanh toán đơn" as UC08
+  usecase "Kiểm tra tồn kho" as UC09
+  usecase "Tạo đơn chờ thanh toán" as UC10
+  usecase "Thanh toán mô phỏng" as UC11
+  usecase "Áp dụng mã giảm giá" as UC12
+  usecase "Dùng điểm thưởng" as UC13
+  usecase "Xem lịch sử đơn" as UC14
+  usecase "Theo dõi trạng thái đơn" as UC15
+  usecase "Quản lý đơn\n(đã thanh toán)" as UC16
+  usecase "Quản lý thực đơn" as UC17
+  usecase "Quản lý khuyến mãi" as UC18
+  usecase "Quản lý người dùng" as UC19
+}
+
+C -- UC01
+C -- UC02
+C -- UC03
+C -- UC04
+C -- UC05
+C -- UC06
+C -- UC07
+C -- UC08
+C -- UC14
+C -- UC15
+S -- UC06
+S -- UC07
+S -- UC16
+O -- UC06
+O -- UC07
+O -- UC17
+O -- UC18
+O -- UC19
+P -- UC11
+
+UC08 ..> UC09 : <<include>>
+UC08 ..> UC10 : <<include>>
+UC08 ..> UC11 : <<include>>
+UC12 ..> UC08 : <<extend>>\n[có mã]
+UC13 ..> UC08 : <<extend>>\n[dùng điểm]
+UC05 ..> UC08 : <<extend>>\n[chưa đăng nhập, chọn đăng ký]
+UC06 ..> UC08 : <<extend>>\n[chưa đăng nhập, chọn đăng nhập]
+
+note bottom of UC11
+  Không dùng tiền thật.
+  UNKNOWN xử lý bằng status inquiry.
+end note
+@enduml
