@@ -1,5 +1,5 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import Home from "../app/page";
 
 beforeEach(() => {
@@ -56,5 +56,52 @@ describe("menu", () => {
     render(<Home />);
     expect((await screen.findByRole("alert")).textContent).toContain("Không thể kết nối");
     expect(screen.queryByText("Hiện chưa có thức uống nào.")).toBeNull();
+  });
+});
+
+
+describe("catalog search and retry", () => {
+  it("filters names without case or accent sensitivity and restores results on clear", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => [
+      { id: 1, name: "Cà phê sữa", price: 29000, image: "☕" },
+      { id: 2, name: "Trà đào", price: 35000, image: "🍑" },
+    ] });
+    vi.stubGlobal("fetch", fetchMock);
+    render(<Home />);
+    await screen.findByRole("heading", { name: "Cà phê sữa" });
+    const search = screen.getByRole("searchbox", { name: "Tìm đồ uống theo tên" });
+    fireEvent.change(search, { target: { value: "  TRA DAO  " } });
+    expect(screen.getByRole("heading", { name: "Trà đào" })).toBeDefined();
+    expect(screen.queryByRole("heading", { name: "Cà phê sữa" })).toBeNull();
+    fireEvent.change(search, { target: { value: "unknown" } });
+    expect(screen.getByText("Không tìm thấy đồ uống phù hợp.")).toBeDefined();
+    fireEvent.change(search, { target: { value: "" } });
+    expect(screen.getAllByRole("article")).toHaveLength(2);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("retries a failed request, shows loading and renders recovered products", async () => {
+    let resolveRequest!: (value: unknown) => void;
+    const fetchMock = vi.fn().mockRejectedValueOnce(new Error("offline"))
+      .mockImplementationOnce(() => new Promise((resolve) => { resolveRequest = resolve; }));
+    vi.stubGlobal("fetch", fetchMock);
+    render(<Home />);
+    await screen.findByRole("alert");
+    fireEvent.click(screen.getByRole("button", { name: "Thử tải lại" }));
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(screen.getByText("Đang tải menu...")).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Thử tải lại" })).toBeNull();
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    resolveRequest({ ok: true, json: async () => [{ id: 1, name: "Latte", price: 39000, image: "🥛" }] });
+    expect(await screen.findByRole("heading", { name: "Latte" })).toBeDefined();
+  });
+
+  it("keeps retry available if the next request also fails", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("offline")));
+    render(<Home />);
+    await screen.findByRole("alert");
+    fireEvent.click(screen.getByRole("button", { name: "Thử tải lại" }));
+    expect(await screen.findByRole("alert")).toBeDefined();
+    expect(screen.getByRole("button", { name: "Thử tải lại" })).toBeDefined();
   });
 });

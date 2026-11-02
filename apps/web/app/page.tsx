@@ -1,32 +1,8 @@
-"use client";
-
-import { useEffect, useState } from "react";
-
-import type { Product } from "../types/product";
-import { getProducts } from "../services/product.service";
 import { Header } from "../components/layout/header";
 import { Footer } from "../components/layout/footer";
-import { ProductList } from "../components/menu/product-list";
+import { MenuCatalog } from "../components/menu/menu-catalog";
 
 export default function Home() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    async function fetchProducts() {
-      try {
-        const data = await getProducts();
-        setProducts(data);
-      } catch {
-        setError("Không thể kết nối đến máy chủ. Vui lòng thử lại.");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchProducts();
-  }, []);
 
   return (
     <main className="min-h-screen bg-[#faf7f2] text-stone-900">
@@ -70,39 +46,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="menu" className="bg-white px-6 py-16 md:px-16">
-        <div className="mx-auto max-w-6xl">
-          <p className="text-sm font-semibold uppercase tracking-widest text-amber-800">
-            Menu nổi bật
-          </p>
-
-          <h2 className="mt-3 text-3xl font-bold">
-            Bạn muốn uống gì hôm nay?
-          </h2>
-
-          {loading && (
-            <p className="mt-8 text-stone-500">
-              Đang tải menu...
-            </p>
-          )}
-
-          {!loading && error && (
-            <p role="alert" className="mt-8 text-red-600">
-              {error}
-            </p>
-          )}
-
-          {!loading && !error && products.length === 0 && (
-            <p className="mt-8 text-stone-500">
-              Hiện chưa có thức uống nào.
-            </p>
-          )}
-
-          {!loading && !error && products.length > 0 && (
-            <ProductList products={products} />
-          )}
-        </div>
-      </section>
+      <MenuCatalog />
 
       <Footer />
     </main>
