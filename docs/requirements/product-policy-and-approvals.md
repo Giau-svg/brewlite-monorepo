@@ -1,8 +1,6 @@
 # BREWLITE — PRODUCT POLICY, DECISION RECORD & APPROVALS
 
 **Mã tài liệu:** BL-REQ-03 · **Phiên bản:** 1.0.0 · **Ngày:** 29/10/2026  
-**Trạng thái:** **Baseline đề xuất, đủ chi tiết để review và triển khai sau khi được nhóm chấp thuận; không có chữ ký phê duyệt thực tế.**
-
 ## 1. Quy tắc quản lý quyết định
 
 - **Nguồn [A]** = Assignment 2; **[U]** = use-case/activity/use-case overview do nhóm cung cấp; **[D]** = thiết kế cụ thể hóa do người soạn đề xuất; **[S]** = tham chiếu chuẩn/thông lệ, không phải mệnh lệnh đặt ra chỉ tiêu kinh doanh.
