@@ -34,3 +34,9 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Backend configuration
+
+Copy `.env.example` to `.env.local` in `apps/web` and set `NEXT_PUBLIC_API_URL` to the NestJS base URL (local: `http://localhost:3001`). Restart the development server after changes. This URL is public and bundled during production builds, so configure it before `npm run build`. The menu keeps its existing error state if the URL is missing or the API cannot be reached.
+
+Product images can be stored in `public/images/products/` when real image assets are available. The current API returns emoji in `image`; the UI preserves this response.

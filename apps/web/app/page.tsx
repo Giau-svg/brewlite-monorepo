@@ -1,14 +1,12 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
 
-type Product = {
-  id: number;
-  name: string;
-  price: number;
-  image: string;
-};
+import type { Product } from "../types/product";
+import { getProducts } from "../services/product.service";
+import { Header } from "../components/layout/header";
+import { Footer } from "../components/layout/footer";
+import { ProductList } from "../components/menu/product-list";
 
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -18,13 +16,7 @@ export default function Home() {
   useEffect(() => {
     async function fetchProducts() {
       try {
-        const response = await fetch("http://localhost:3001/products");
-
-        if (!response.ok) {
-          throw new Error("Không thể tải menu.");
-        }
-
-        const data: Product[] = await response.json();
+        const data = await getProducts();
         setProducts(data);
       } catch {
         setError("Không thể kết nối đến máy chủ. Vui lòng thử lại.");
@@ -38,20 +30,7 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-[#faf7f2] text-stone-900">
-      <header className="flex items-center justify-between border-b border-stone-200 px-6 py-5 md:px-16">
-        <h1 className="text-2xl font-bold tracking-tight">
-          BrewLite<span className="text-amber-700">.</span>
-        </h1>
-
-        <nav className="flex gap-6 text-sm">
-          <a href="#menu" className="hover:text-amber-700">
-            Menu
-          </a>
-          <a href="#about" className="hover:text-amber-700">
-            Về chúng tôi
-          </a>
-        </nav>
-      </header>
+      <Header />
 
       <section className="mx-auto grid max-w-6xl items-center gap-10 px-6 py-16 md:grid-cols-2 md:px-12 md:py-24">
         <div>
@@ -120,38 +99,12 @@ export default function Home() {
           )}
 
           {!loading && !error && products.length > 0 && (
-            <div className="mt-8 grid gap-5 sm:grid-cols-2 md:grid-cols-3">
-              {products.map((item) => (
-                <article
-                  key={item.id}
-                  className="rounded-2xl border border-stone-200 p-6 transition hover:-translate-y-1 hover:shadow-lg"
-                >
-                  <div className="text-5xl">{item.image}</div>
-
-                  <h3 className="mt-5 text-xl font-semibold">
-                    {item.name}
-                  </h3>
-
-                  <p className="mt-2 text-amber-800">
-                    {item.price.toLocaleString("vi-VN")}đ
-                  </p>
-
-                  <p className="mt-3 text-sm text-stone-500">
-                    Thức uống thơm ngon dành cho bạn.
-                  </p>
-                </article>
-              ))}
-            </div>
+            <ProductList products={products} />
           )}
         </div>
       </section>
 
-      <footer
-        id="about"
-        className="px-6 py-8 text-center text-sm text-stone-500"
-      >
-        © 2026 BrewLite · Cà phê dành cho mỗi ngày.
-      </footer>
+      <Footer />
     </main>
   );
 }

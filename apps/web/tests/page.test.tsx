@@ -1,10 +1,15 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import Home from "../app/page";
+
+beforeEach(() => {
+  vi.stubEnv("NEXT_PUBLIC_API_URL", "http://localhost:3001");
+});
 
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
 });
 
 describe("menu", () => {
@@ -26,6 +31,15 @@ describe("menu", () => {
     expect(screen.getByText(`${(39000).toLocaleString("vi-VN")}đ`)).toBeDefined();
     expect(fetchMock).toHaveBeenCalledWith("http://localhost:3001/products");
     expect(screen.queryByText("Đang tải menu...")).toBeNull();
+  });
+
+  it("uses the configured backend URL and accepts a trailing slash", async () => {
+    vi.stubEnv("NEXT_PUBLIC_API_URL", "https://api.example.test/");
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => [] });
+    vi.stubGlobal("fetch", fetchMock);
+    render(<Home />);
+    await screen.findByText("Hiện chưa có thức uống nào.");
+    expect(fetchMock).toHaveBeenCalledWith("https://api.example.test/products");
   });
 
   it("shows an empty state for an empty catalog", async () => {
