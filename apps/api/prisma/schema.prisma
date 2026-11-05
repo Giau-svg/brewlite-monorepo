@@ -1,0 +1,251 @@
+// Prisma schema file for BrewLite Backend
+// Based on Assignment 2 Domain Class Diagram
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  CUSTOMER
+  STAFF
+  MANAGER
+}
+
+enum LoyaltyTransactionType {
+  EARN
+  REDEEM
+  REFUND
+}
+
+enum NotificationType {
+  PAYMENT_SUCCESS
+  ORDER_STATUS_UPDATED
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAID
+  PREPARING
+  READY
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  WALLET
+  CARD
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+}
+
+model User {
+  id                  String               @id @default(uuid())
+  fullName            String
+  email               String               @unique
+  phone               String?
+  passwordHash        String
+  role                UserRole             @default(CUSTOMER)
+  loyaltyPoints       Int                  @default(0)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+
+  orders              Order[]
+  cart                Cart?
+  notifications       Notification[]
+  loyaltyTransactions LoyaltyTransaction[]
+
+  @@map("users")
+}
+
+model LoyaltyTransaction {
+  id           String                 @id @default(uuid())
+  userId       String
+  user         User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type         LoyaltyTransactionType
+  points       Int
+  balanceAfter Int
+  description  String?
+  role         UserRole
+  createdAt    DateTime               @default(now())
+
+  @@map("loyalty_transactions")
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  content   String
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  @@map("notifications")
+}
+
+model Category {
+  id       String    @id @default(uuid())
+  name     String    @unique
+  products Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id            String      @id @default(uuid())
+  categoryId    String?
+  category      Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  name          String
+  description   String?
+  basePrice     Decimal     @db.Decimal(10, 2)
+  imageUrl      String?
+  stockQuantity Int         @default(100)
+  isAvailable   Boolean     @default(true)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  sizes         Size[]
+  orderItems    OrderItem[]
+  cartItems     CartItem[]
+
+  @@map("products")
+}
+
+model Size {
+  id         String   @id @default(uuid())
+  productId  String?
+  product    Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+  name       String
+  extraPrice Decimal  @default(0) @db.Decimal(10, 2)
+
+  @@map("sizes")
+}
+
+model Topping {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  price       Decimal  @db.Decimal(10, 2)
+  isAvailable Boolean  @default(true)
+
+  @@map("toppings")
+}
+
+model Cart {
+  id        String     @id @default(uuid())
+  userId    String?    @unique
+  user      User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId String?
+  updatedAt DateTime   @updatedAt
+  items     CartItem[]
+
+  @@map("carts")
+}
+
+model CartItem {
+  id        String   @id @default(uuid())
+  cartId    String
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int      @default(1)
+  note      String?
+
+  @@map("cart_items")
+}
+
+model Order {
+  id             String      @id @default(uuid())
+  orderCode      String      @unique
+  userId         String?
+  user           User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  status         OrderStatus @default(PENDING_PAYMENT)
+  subtotal       Decimal     @db.Decimal(10, 2)
+  discountAmount Decimal     @default(0) @db.Decimal(10, 2)
+  pointsUsed     Int         @default(0)
+  pointsDiscount Decimal     @default(0) @db.Decimal(10, 2)
+  finalTotal     Decimal     @db.Decimal(10, 2)
+  note           String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  items          OrderItem[]
+  payments       Payment[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id          String             @id @default(uuid())
+  orderId     String
+  order       Order              @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product            @relation(fields: [productId], references: [id])
+  productName String
+  sizeName    String?
+  unitPrice   Decimal            @db.Decimal(10, 2)
+  quantity    Int
+  lineTotal   Decimal            @db.Decimal(10, 2)
+  note        String?
+
+  toppings    OrderItemTopping[]
+
+  @@map("order_items")
+}
+
+model OrderItemTopping {
+  id          String    @id @default(uuid())
+  orderItemId String
+  orderItem   OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  toppingName String
+  price       Decimal   @db.Decimal(10, 2)
+
+  @@map("order_item_toppings")
+}
+
+model Payment {
+  id             String        @id @default(uuid())
+  orderId        String
+  order          Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  amount         Decimal       @db.Decimal(10, 2)
+  method         PaymentMethod
+  status         PaymentStatus @default(PENDING)
+  idempotencyKey String?       @unique
+  transactionRef String?
+  failureReason  String?
+  createdAt      DateTime      @default(now())
+  paidAt         DateTime?
+
+  @@map("payments")
+}
+
+model Promotion {
+  id            String       @id @default(uuid())
+  code          String       @unique
+  discountType  DiscountType
+  discountValue Decimal      @db.Decimal(10, 2)
+  maxDiscount   Decimal?     @db.Decimal(10, 2)
+  minOrderValue Decimal?     @db.Decimal(10, 2)
+  startDate     DateTime
+  endDate       DateTime
+  usageLimit    Int          @default(100)
+  usedCount     Int          @default(0)
+  isActive      Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+
+  @@map("promotions")
+}

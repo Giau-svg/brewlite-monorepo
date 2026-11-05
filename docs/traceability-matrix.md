@@ -8,13 +8,13 @@
 
 | Requirement | Mức | Nguồn | Use-case/Activity | Component/API dự kiến | Test cases | Implementation/evidence |
 |---|---|---|---|---|---|---|
-| FR-01 | Must | [A]+[U]+[D] | UC01 (Menu) | `GET /products` | TC-04 | Planned; PR/SHA: — |
-| FR-02 | Must | [A]+[U]+[D] | UC02 (Menu) | `GET /products/:id` | TC-04 | Planned; PR/SHA: — |
+| FR-01 | Must | [A]+[U]+[D] | UC01 (Menu) | `GET /products` | TC-04 | Implemented (NestJS + Prisma); Unit tested |
+| FR-02 | Must | [A]+[U]+[D] | UC02 (Menu) | `GET /products/:id` | TC-04 | Implemented (NestJS + Prisma); Unit tested |
 | FR-03 | Must | [A]+[U]+[D] | UC03 (Menu) | `Catalog/Cart` | TC-05 | Planned; PR/SHA: — |
 | FR-04 | Must | [U]+[D] | UC17 (Owner) | `/admin/products` | TC-18 | Planned; PR/SHA: — |
 | FR-05 | Must | [A]+[U]+[D] | UC04 (Cart) | `UI cart` | TC-05 | Planned; PR/SHA: — |
 | FR-06 | Must | [A]+[U]+[D] | UC04 (Cart) | `UI cart` | TC-03/05 | Planned; PR/SHA: — |
-| FR-07 | Must | [A]+[U]+[D] | UC08 (Cart) | `POST /checkout/quote` | TC-05 | Planned; PR/SHA: — |
+| FR-07 | Must | [A]+[U]+[D] | UC08 (Cart) | `POST /cart/calculate` | TC-05 | Implemented (Cart & Pricing engine); Tested |
 | FR-08 | Must | [A]+[U]+[D] | UC05 (Auth) | `/auth/register` | TC-01 | Planned; PR/SHA: — |
 | FR-09 | Must | [A]+[U]+[D] | UC06/UC07 (Auth) | `/auth/login/logout` | TC-02 | Planned; PR/SHA: — |
 | FR-10 | Must | [A]+[U]+[D] | UC08 (Auth) | `JWT/RBAC` | SEC-01/02 | Planned; PR/SHA: — |
@@ -22,9 +22,9 @@
 | FR-30 | Must | [U]+[D] | UC05 (Auth) | `/auth/set-password` | TC-01 | Planned; PR/SHA: — |
 | FR-31 | Must | [U]+[D] | UC06 (Auth) | `/auth/refresh` | SEC-02 | Planned; PR/SHA: — |
 | FR-34 | Must | [U]+[D] | UC05 (Auth) | `OTP and auth throttles` | SEC-03 | Planned; PR/SHA: — |
-| FR-12 | Must | [U]+[D] | UC12 (Checkout) | `Coupon validator` | TC-06/INT-07 | Planned; PR/SHA: — |
+| FR-12 | Must | [U]+[D] | UC12 (Checkout) | `Coupon validator` | TC-06/INT-07 | Implemented (Promotion validation in CartService); Tested |
 | FR-13 | Must | [U]+[D] | UC13 (Checkout) | `Loyalty service` | TC-07/INT-06 | Planned; PR/SHA: — |
-| FR-14 | Must | [U]+[D] | UC08 (Checkout) | `Pricing service` | TC-05/06/07 | Planned; PR/SHA: — |
+| FR-14 | Must | [U]+[D] | UC08 (Checkout) | `Pricing service` | TC-05/06/07 | Implemented (`calculateQuote` with Size, Toppings, Voucher); Tested |
 | FR-15 | Must | [A]+[U]+[D] | UC09 (Checkout) | `Inventory service` | TC-08/INT-05 | Planned; PR/SHA: — |
 | FR-16 | Must | [A]+[U]+[D] | UC10 (Checkout) | `POST /orders` | TC-09/INT-05 | Planned; PR/SHA: — |
 | FR-17 | Must | [A]+[U]+[D] | UC11 (Payment) | `POST /orders/:id/payments` | TC-11 | Planned; PR/SHA: — |

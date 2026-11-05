@@ -1,29 +1,17 @@
-
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Param } from '@nestjs/common';
+import { ProductsService } from './products.service';
 
 @Controller('products')
 export class ProductsController {
+  constructor(private readonly productsService: ProductsService) {}
+
   @Get()
-  getProducts() {
-    return [
-      {
-        id: 1,
-        name: 'Cà phê sữa',
-        price: 29000,
-        image: '☕',
-      },
-      {
-        id: 2,
-        name: 'Latte',
-        price: 39000,
-        image: '🥛',
-      },
-      {
-        id: 3,
-        name: 'Trà đào',
-        price: 35000,
-        image: '🍑',
-      },
-    ];
+  async getProducts() {
+    return this.productsService.findAll();
+  }
+
+  @Get(':id')
+  async getProductById(@Param('id') id: string) {
+    return this.productsService.findOne(id);
   }
 }
