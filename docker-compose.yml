@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: brewlite-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: brewlite_user
+      POSTGRES_PASSWORD: brewlite_password
+      POSTGRES_DB: brewlite_db
+    ports:
+      # Ánh xạ ra cổng 5433 ở máy host để tránh trùng với PostgreSQL local (5432) nếu đang chạy
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U brewlite_user -d brewlite_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

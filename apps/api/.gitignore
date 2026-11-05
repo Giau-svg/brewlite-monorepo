@@ -45,6 +45,9 @@ lerna-debug.log*
 .env.production.local
 .env.local
 
+# Prisma - generated client (sinh lại bằng "prisma generate")
+node_modules/.prisma
+
 # temp directory
 .temp
 .tmp
