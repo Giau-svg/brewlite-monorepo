@@ -1,0 +1,7 @@
+/* Hide built-in password controls in Microsoft Edge/IE.
+   BrewLite provides its own accessible visibility button. */
+.brewlite-password-input::-ms-reveal,
+.brewlite-password-input::-ms-clear {
+  display: none !important;
+  visibility: hidden;
+}
