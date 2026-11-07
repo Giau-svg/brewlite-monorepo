@@ -6,7 +6,7 @@ export class ProductsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll() {
-    return this.prisma.product.findMany({
+    const products = await this.prisma.product.findMany({
       where: { isAvailable: true },
       include: {
         category: true,
@@ -14,6 +14,13 @@ export class ProductsService {
       },
       orderBy: { createdAt: 'desc' },
     });
+
+    // Trả về kèm price và image để tương thích 100% với Frontend Next.js types/product.ts
+    return products.map((p) => ({
+      ...p,
+      price: Number(p.basePrice),
+      image: p.imageUrl ?? '☕',
+    }));
   }
 
   async findOne(id: string) {

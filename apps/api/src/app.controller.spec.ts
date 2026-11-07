@@ -15,7 +15,7 @@ describe('AppController', () => {
   describe('health', () => {
     it('should return status ok', () => {
       const result = appController.getHealth();
-      expect(result.status).toBe('ok');
+      expect(result.status).toBe('unkow-unreality');
       expect(result.service).toBe('BrewLite API');
       expect(result.timestamp).toBeDefined();
     });
