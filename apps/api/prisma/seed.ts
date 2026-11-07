@@ -67,7 +67,7 @@ async function main() {
       name: 'Cà phê sữa đá BrewLite',
       description: 'Hạt cà phê Robusta phối Arabica đậm đà vị truyền thống hòa quyện cùng sữa đặc béo ngậy.',
       basePrice: 29000,
-      imageUrl: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=400',
+      imageUrl: '/images/products/ca-phe-sua-da.jpg',
       categoryId: catCoffee.id,
       stockQuantity: 150,
       sizes: [
@@ -80,7 +80,7 @@ async function main() {
       name: 'Latte Hạnh Nhân',
       description: 'Espresso thơm dịu cùng sữa tươi thanh trùng và lớp bọt sữa mịn màng kèm sốt hạnh nhân.',
       basePrice: 39000,
-      imageUrl: 'https://images.unsplash.com/photo-1570968915860-54d5c301fa9f?w=400',
+      imageUrl: '/images/products/latte-hanh-nhan.jpg',
       categoryId: catCoffee.id,
       stockQuantity: 80,
       sizes: [
@@ -92,7 +92,7 @@ async function main() {
       name: 'Trà Đào Cam Sả',
       description: 'Vị trà thơm nồng kết hợp hương cam tươi chua ngọt, miếng đào giòn rụm và sả thơm thư giãn.',
       basePrice: 35000,
-      imageUrl: 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=400',
+      imageUrl: '/images/products/tra-dao-cam-xa.jpg',
       categoryId: catTea.id,
       stockQuantity: 120,
       sizes: [
@@ -104,7 +104,7 @@ async function main() {
       name: 'Trà Sữa Ô Long Nướng',
       description: 'Trà Ô long được sao nướng đậm hương thơm khói kết hợp sữa béo ngậy chuẩn vị Đài Loan.',
       basePrice: 38000,
-      imageUrl: 'https://images.unsplash.com/photo-1558857563-b37cfbbf46a2?w=400',
+      imageUrl: '/images/products/tra-sua-olong-nuong.jpg',
       categoryId: catMilkTea.id,
       stockQuantity: 200,
       sizes: [
@@ -116,7 +116,7 @@ async function main() {
       name: 'Matcha Đá Xay Kem Tuyết',
       description: 'Matcha Uji Nhật Bản nguyên chất xay mịn cùng sữa béo và lớp bông kem ngọt ngào.',
       basePrice: 45000,
-      imageUrl: 'https://images.unsplash.com/photo-1536256263959-770b48d82b0a?w=400',
+      imageUrl: '/images/products/matcha-da-xoay-kem-tuyet.jpg',
       categoryId: catFreeze.id,
       stockQuantity: 60,
       sizes: [
@@ -128,7 +128,7 @@ async function main() {
       name: 'Trà Vải Hoa Hồng',
       description: 'Nước cốt trà đen thanh mát kết hợp quả vải ngâm ngọt mọng và hương hoa hồng quyến rũ.',
       basePrice: 36000,
-      imageUrl: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=400',
+      imageUrl: '/images/products/tra-vai-hoa-hong.jpg',
       categoryId: catTea.id,
       stockQuantity: 90,
       sizes: [
@@ -158,6 +158,12 @@ async function main() {
             create: p.sizes,
           },
         },
+        include: { sizes: true },
+      });
+    } else if (product.imageUrl !== p.imageUrl) {
+      product = await prisma.product.update({
+        where: { id: product.id },
+        data: { imageUrl: p.imageUrl },
         include: { sizes: true },
       });
     }

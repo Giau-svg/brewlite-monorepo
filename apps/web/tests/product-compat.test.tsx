@@ -23,7 +23,7 @@ describe("API compatibility", () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => [{ ...makeProduct(), basePrice }] }));
     render(<Home />);
     expect(await screen.findByRole("alert")).toBeDefined();
-    expect(screen.getByRole("button")).toBeDefined();
+    expect(screen.getByRole("button", { name: "Thử tải lại" })).toBeDefined();
     expect(screen.queryByRole("article")).toBeNull();
   });
 
@@ -45,7 +45,12 @@ describe("product card", () => {
     expect(() => formatPrice(" ")).toThrow();
   });
 
-  it.each([null, "not-a-url", "javascript:alert(1)"])("falls back for missing or invalid image %s", (imageUrl) => {
+  it("renders a local public product image", () => {
+    render(<ProductCard product={makeProduct({ imageUrl: "/images/products/ca-phe-sua-da.jpg" })} />);
+    expect(screen.getByRole("img", { name: "Latte" }).getAttribute("src")).toBe("/images/products/ca-phe-sua-da.jpg");
+  });
+
+  it.each([null, "not-a-url", "javascript:alert(1)", "//images.example.test/latte.jpg", "/images/../secret.jpg"])("falls back for missing or invalid image %s", (imageUrl) => {
     render(<ProductCard product={makeProduct({ imageUrl })} />);
     expect(screen.getByRole("img", { name: /Chưa có ảnh/ }).textContent).toBe("☕");
   });
@@ -59,16 +64,16 @@ describe("product card", () => {
   });
 });
 describe("product description and search", () => {
-  it("shows the actual API description and trims display whitespace", () => {
-    render(<ProductCard product={makeProduct({ name: "Cà phê sữa đá  ", description: "  Cà phê đậm đà kết hợp với sữa đặc  " })} />);
+  it("shows the trimmed name and price without repeating the category", () => {
+    render(<ProductCard product={makeProduct({ name: "Cà phê sữa đá  ", description: "  Cà phê đậm đà kết hợp với sữa đặc  ", category: { id: "cat", name: "Cà phê" } })} />);
     expect(screen.getByRole("heading", { name: "Cà phê sữa đá" }).textContent).toBe("Cà phê sữa đá");
-    expect(screen.getByText("Cà phê đậm đà kết hợp với sữa đặc")).toBeDefined();
-    expect(screen.queryByText("Thức uống thơm ngon dành cho bạn.")).toBeNull();
-  });
-
-  it.each([null, "", "   "])("uses the default description for %s", (description) => {
-    render(<ProductCard product={makeProduct({ description })} />);
-    expect(screen.getByText("Thức uống thơm ngon dành cho bạn.")).toBeDefined();
+    expect(screen.getByText("39.000đ")).toBeDefined();
+    const detail = screen.getByRole("link", { name: "Xem chi tiết Cà phê sữa đá" });
+    expect(detail.getAttribute("href")).toBe("/products/11111111-1111-4111-8111-111111111111");
+    expect(detail.querySelector("button")).toBeNull();
+    expect(screen.queryByRole("link", { name: "Xem chi tiết" })).toBeNull();
+    expect(screen.queryByText("Cà phê", { exact: true })).toBeNull();
+    expect(screen.queryByText("Cà phê đậm đà kết hợp với sữa đặc")).toBeNull();
   });
 
   it.each(["Cà phê sữa đá", "ca phe sua da", "CA PHE SUA DA", "sữa đá"])("finds a trailing-space product with %s", async (query) => {

@@ -9,6 +9,13 @@ export type Size = {
   extraPrice: DecimalPrice;
 };
 
+export type Topping = {
+  id: string;
+  name: string;
+  price: DecimalPrice;
+  isAvailable: boolean;
+};
+
 export type Product = {
   id: string;
   name: string;
@@ -22,4 +29,8 @@ export type Product = {
   sizes: Size[];
   createdAt: string;
   updatedAt: string;
+};
+
+export type ProductDetail = Product & {
+  availableToppings: Topping[];
 };

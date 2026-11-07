@@ -1,4 +1,4 @@
-import type { Product } from "../types/product";
+import type { Product, ProductDetail } from "../types/product";
 import { parsePrice } from "../lib/format-price";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -28,7 +28,14 @@ function isProduct(value: unknown): value is Product {
   }
 }
 
-export async function getProducts(): Promise<Product[]> {
+export class ProductNotFoundError extends Error {
+  constructor() {
+    super("Product not found");
+    this.name = "ProductNotFoundError";
+  }
+}
+
+export function apiUrl(resourcePath: string): string {
   const baseUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
   if (!baseUrl) {
     throw new Error("NEXT_PUBLIC_API_URL is not configured");
@@ -39,8 +46,26 @@ export async function getProducts(): Promise<Product[]> {
   }
   // Accept the server origin or an API base ending in /api, including a trailing slash.
   const path = apiUrl.pathname.replace(/\/+$/, "");
-  apiUrl.pathname = `${path.endsWith("/api") ? path : `${path}/api`}/products`;
-  const response = await fetch(apiUrl.toString());
+  const prefix = path.endsWith("/api") ? path : `${path}/api`;
+  const resource = resourcePath.startsWith("/") ? resourcePath : `/${resourcePath}`;
+  apiUrl.pathname = `${prefix}${resource}`;
+  return apiUrl.toString();
+}
+
+function isTopping(value: unknown): boolean {
+  if (!isRecord(value)) return false;
+  try {
+    parsePrice(value.price);
+  } catch {
+    return false;
+  }
+  return typeof value.id === "string" && value.id.length > 0 &&
+    typeof value.name === "string" && value.name.trim().length > 0 &&
+    typeof value.isAvailable === "boolean";
+}
+
+export async function getProducts(): Promise<Product[]> {
+  const response = await fetch(apiUrl("/products"));
   if (!response.ok) {
     throw new Error("Unable to load products");
   }
@@ -48,5 +73,20 @@ export async function getProducts(): Promise<Product[]> {
   if (!Array.isArray(data) || !data.every(isProduct)) {
     throw new Error("Invalid product response");
   }
+  return data;
+}
+
+function isProductDetail(value: unknown): value is ProductDetail {
+  if (!isProduct(value)) return false;
+  const toppings = (value as Record<string, unknown>).availableToppings;
+  return Array.isArray(toppings) && toppings.every(isTopping);
+}
+
+export async function getProduct(id: string): Promise<ProductDetail> {
+  const response = await fetch(apiUrl(`/products/${encodeURIComponent(id)}`));
+  if (response.status === 404) throw new ProductNotFoundError();
+  if (!response.ok) throw new Error("Unable to load product");
+  const data: unknown = await response.json();
+  if (!isProductDetail(data)) throw new Error("Invalid product response");
   return data;
 }
