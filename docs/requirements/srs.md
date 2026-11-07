@@ -2,11 +2,8 @@
 
 **Mã tài liệu:** BL-REQ-02 · **Assignment:** 2 / Task 1.2  
 **Version:** 1.0.0 — *review-ready candidate* · **Ngày:** 29/10/2026  
-**Trạng thái:** Đặc tả hoàn chỉnh về nội dung nghiệp vụ/kiểm thử cho MVP được đề xuất; **chưa có chứng cứ stakeholder phê duyệt**.  
-**Tài liệu liên quan:** `context-and-scope.md` (BL-REQ-01), `product-policy-and-approvals.md` (BL-REQ-03), `../traceability-matrix.md`, Task 1.3 UC Đặt và thanh toán, Activity Task 2.1, `../diagrams/usecase-overview.puml`.
-
+**Trạng thái:** Đặc tả hoàn chỉnh về nội dung nghiệp vụ cho MVP được đề xuất  
 ## 1. Giới thiệu
-
 ### 1.1. Mục đích và người đọc
 
 SRS mô tả **hành vi kiểm chứng được** của BrewLite: chức năng (`FR`), chất lượng (`NFR`), quy tắc nghiệp vụ (`BR`), API/interface ở mức hợp đồng, và tiêu chí nghiệm thu (`AC`). Người đọc: Product Owner, BA, FE, BE, QA, reviewer và giảng viên. Mã định danh ổn định phục vụ quản lý thay đổi và ma trận truy vết. Cấu trúc tham khảo ISO/IEC/IEEE 29148:2018, phân loại NFR tham khảo ISO/IEC 25010:2023; không tuyên bố toàn bộ quy trình đã được chứng nhận chuẩn.
@@ -157,7 +154,7 @@ SRS mô tả **hành vi kiểm chứng được** của BrewLite: chức năng (
 | E5/A5 — payment failed | attempt FAILED, retry mới hoặc cancel; không mất mã/điểm | `PENDING_PAYMENT` hoặc `CANCELLED` |
 | Gateway timeout/response lost | attempt UNKNOWN → status inquiry, chặn retry gây duplicate charge | `PENDING_PAYMENT` cho tới khi reconcile |
 
-## 5. External Interface Requirements (mức hợp đồng, không thay API specification)
+## 5. External Interface Requirements
 
 ### 5.1. UI
 
@@ -180,11 +177,9 @@ Mobile-first Next.js/PWA. Trang tối thiểu: menu, product detail, cart, login
 
 **HTTP status policy:** 400 bad input; 401 unauthenticated; 403 forbidden; 404 not found/obscure private ID; 409 conflict (out of stock, invalid state, idempotency key reuse with other payload); 422 business-rule violation (coupon/points). 5xx error server không được được diễn giải thành payment failed nếu chưa truy vấn status.
 
-**API schema chi tiết, tên trường thực tế, error code và mock contract** phải định nghĩa khi Task 3/4 triển khai theo đúng SRS; danh sách trên là hợp đồng tham chiếu và không phải bằng chứng API đã tồn tại.
-
 ## 6. Non-functional Requirements (quality requirements)
 
-**Phương pháp:** ISO/IEC 25010:2023 cung cấp mô hình **nhóm chất lượng**, còn **số đo/điều kiện thử** ở đây do nhóm đề xuất để có acceptance reproducible. Chỉ tiêu phải được đo, không được coi là đã đạt khi chưa chạy test.
+**Phương pháp:** ISO/IEC 25010
 
 | ID | Chất lượng; mức | Yêu cầu có thể đo | Phương pháp/Pass criteria |
 |---|---|---|---|
@@ -209,13 +204,12 @@ Mobile-first Next.js/PWA. Trang tối thiểu: menu, product detail, cart, login
 
 ### 6.1. Fixture và biên bản đo hiệu năng
 
-Tạo `tests/performance/README.md` khi code thực tế để ghi **SHA commit, ngày, máy/CPU/RAM, Node/Postgres version, dataset seed, số VUs, thời lượng, phương pháp đo, percentiles và kết quả**. Nếu máy production demo nhỏ hơn baseline, đo lại trên cấu hình thật và ghi chênh lệch; không thay số âm thầm sau khi test fail.
+Tạo `tests/performance/README.md` khi code thực tế để ghi **SHA commit, ngày, máy/CPU/RAM, Node/Postgres version, dataset seed, số VUs, thời lượng, phương pháp đo, percentiles và kết quả**. 
 
 ## 7. Mô hình Use-case tổng quát — tài liệu kèm theo
 
 Nguồn có thể chỉnh sửa ở `docs/diagrams/usecase-overview.puml`, hiển thị các actor: Customer, Staff, Owner, Mock Payment Service. Use-case nhóm đang có được giữ về mặt chủ thể; bổ sung `Xem thực đơn`, `Xem chi tiết sản phẩm`, `Theo dõi đơn`, `Thiết lập mật khẩu`, tách `Thanh toán mô phỏng` và `Quản lý khuyến mãi` cho đủ phạm vi.
 
-**Lưu ý UML:** Use-case không phải nơi diễn tả mọi bước nội bộ (JWT, transaction, reserve)—chúng thuộc activity/sequence/business rules. Các `include` bắt buộc và `extend` tùy điều kiện phải dùng đúng chiều quan hệ; không mô hình hóa cập nhật status sau thanh toán thành một hành vi tùy chọn nếu nó bắt buộc xảy ra khi success.
 
 ## 8. Truy vết đến Task 1.3 và 2.1
 
@@ -232,7 +226,6 @@ Nguồn có thể chỉnh sửa ở `docs/diagrams/usecase-overview.puml`, hiể
 | E5/A5: thất bại, thử lại, hủy | FR-19/20/32 | AC-19/20/32; TC-12 |
 | Activity 2.1: nhân viên và khách theo dõi | FR-21/22/23/24/33 | AC-21…24/33; TC-13/16/17 |
 
-**Cập nhật bắt buộc vào UC 1.3/Activity 2.1:** ghi thêm reservation vào bước 8; điều kiện paid/UNKNOWN/late payment; dòng 'hủy + giải phóng tồn kho' chỉ với order chưa PAID; chuyển trạng thái sau thanh toán, và chính sách điểm/coupon; chi tiết IMP-01…09 ở BL-REQ-03. Nếu chưa sửa hình/bảng cũ, **chưa thể tuyên bố toàn bộ Task 1.3 và 2.1 đã đồng bộ xong**.
 
 ## 9. Nghiệm thu Task 1.2
 
@@ -243,15 +236,3 @@ Nguồn có thể chỉnh sửa ở `docs/diagrams/usecase-overview.puml`, hiể
 - [ ] Ma trận truy vết có test ID và ghi đúng trạng thái thực thi (chưa chạy test = Planned).
 - [ ] Có review, PR và lịch sử thay đổi; không tự ghi 'approved' hoặc 'passed'.
 
-## 10. Tài liệu tham khảo
-
-1. Assignment2-BrewLite.pdf — §1–§9, tài liệu thầy giao, 2026.
-2. Use-case Overview, Activity Diagram, UC Đặt và thanh toán do nhóm gửi trong cuộc trò chuyện.
-3. ISO/IEC/IEEE 29148:2018: https://www.iso.org/standard/72089.html
-4. ISO/IEC 25010:2023: https://www.iso.org/standard/78176.html
-5. OWASP ASVS 5.0.0: https://asvs.owasp.org/
-6. W3C WCAG 2.2: https://www.w3.org/TR/WCAG22/
-7. RFC 9110: https://www.rfc-editor.org/rfc/rfc9110.html
-8. OWASP Password Storage: https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html
-9. NIST SP 800-63B-4 (password authenticator): https://pages.nist.gov/800-63-4/sp800-63b.html
-10. OWASP Business Logic Security: https://cheatsheetseries.owasp.org/cheatsheets/Business_Logic_Security_Cheat_Sheet.html
