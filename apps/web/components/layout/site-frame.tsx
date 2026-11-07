@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
+import { PurchaseFlow } from "../checkout/purchase-flow";
 import { formatPrice } from "../../lib/format-price";
 import { CartProvider, useCart } from "../cart/cart-provider";
 import { CartLines } from "../cart/cart-lines";
@@ -20,6 +21,7 @@ export function SiteFrame({ children }: { children: ReactNode }) {
 }
 
 function SiteChrome({ children }: { children: ReactNode }) {
+  const [loginOpen, setLoginOpen] = useState(false);
   const { isOpen, closeCart, subtotal, count, toast, lines, lastAdded, dismissToast } = useCart();
 
   useEffect(() => {
@@ -34,7 +36,7 @@ function SiteChrome({ children }: { children: ReactNode }) {
   return (
     <>
       <a className="skip-link" href="#main">Bỏ qua điều hướng</a>
-      <Header />
+      <Header cartCount={count} />
       <main id="main">
         <BackLink />
         {children}
@@ -62,9 +64,9 @@ function SiteChrome({ children }: { children: ReactNode }) {
             <footer>
               <div className="cart-total"><span>Tạm tính</span><span className="amt">{formatPrice(subtotal)}đ</span></div>
               {lines.length > 0 ? (
-                <Link className="btn btn-espresso btn-lg" href="/checkout" style={{ width: "100%" }} onClick={closeCart}>Xem lại đơn</Link>
+                <button type="button" className="btn btn-espresso btn-lg" style={{ width: "100%" }} onClick={() => { closeCart(); setLoginOpen(true); }}>Xác nhận mua</button>
               ) : (
-                <button type="button" className="btn btn-espresso btn-lg" style={{ width: "100%" }} disabled>Xem lại đơn</button>
+                <button type="button" className="btn btn-espresso btn-lg" style={{ width: "100%" }} disabled>Xác nhận mua</button>
               )}
               <button type="button" className="btn btn-ghost" style={{ width: "100%", marginTop: ".5rem" }} onClick={closeCart}>Tiếp tục chọn món</button>
               <p className="visually-hidden">{count} món</p>
@@ -83,10 +85,11 @@ function SiteChrome({ children }: { children: ReactNode }) {
         </div>}
         <div className="cart-success-total"><span>Giỏ hàng hiện có</span><div><strong>{formatPrice(subtotal)}đ</strong><p>({count}) sản phẩm</p></div></div>
         <div className="cart-success-actions">
-          <Link href="/checkout" onClick={dismissToast}>Thanh toán</Link>
+          <button type="button" onClick={() => { dismissToast(); closeCart(); setLoginOpen(true); }}>Xác nhận mua</button>
           <Link href="/cart" className="cart-success-view" onClick={() => { dismissToast(); closeCart(); }}>Xem giỏ hàng</Link>
         </div>
       </div></CenteredDialog>}
+      {loginOpen && <PurchaseFlow onClose={() => setLoginOpen(false)} />}
     </>
   );
 }

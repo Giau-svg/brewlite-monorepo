@@ -7,14 +7,14 @@ type ProductCardProps = { product: Product };
 
 export function ProductCard({ product }: ProductCardProps) {
   const name = product.name.trim();
-  const soldOut = !product.isAvailable || product.stockQuantity < 1;
+  const soldOut = !product.isAvailable || !product.sizes.some((size) => size.isAvailable !== false && size.onHand != null && size.onHand - (size.reserved ?? 0) > 0);
   const href = `/products/${product.id}`;
 
   return (
     <article className="bean-card">
       <Link href={href} className="bean-thumb" aria-label={name}>
         <ProductImage key={product.imageUrl} url={product.imageUrl} name={name} />
-        {soldOut ? <span className="pill">Hết hàng</span> : null}
+        {soldOut ? <span className="pill">{product.sizes.some((size) => size.onHand !== null) ? "Hết hàng" : "Chưa khả dụng"}</span> : null}
       </Link>
       <div className="bean-body">
         <h3 className="bean-name">

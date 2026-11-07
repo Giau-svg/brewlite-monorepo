@@ -1,9 +1,11 @@
 # BREWLITE — SOFTWARE REQUIREMENTS SPECIFICATION (SRS)
 
-**Mã tài liệu:** BL-REQ-02 · **Assignment:** 2 / Task 1.2  
-**Version:** 1.0.0 — *review-ready candidate* · **Ngày:** 29/10/2026  
-**Trạng thái:** Đặc tả hoàn chỉnh về nội dung nghiệp vụ/kiểm thử cho MVP được đề xuất; **chưa có chứng cứ stakeholder phê duyệt**.  
+**Mã tài liệu:** BL-REQ-02 · **Assignment:** 2 / Task 1.2
+**Version:** 1.1.0 — P0 baseline candidate · **Ngày:** 07/11/2026
+**Trạng thái:** Đồng bộ quyết định người yêu cầu cho P0; chưa có PR/chữ ký phê duyệt nhóm. CR-SEC-01 đã được người yêu cầu phê duyệt ngày 07/11/2026; việc phê duyệt không thay thế nghiệm thu hoặc review độc lập.
 **Tài liệu liên quan:** `context-and-scope.md` (BL-REQ-01), `product-policy-and-approvals.md` (BL-REQ-03), `../traceability-matrix.md`, Task 1.3 UC Đặt và thanh toán, Activity Task 2.1, `../diagrams/usecase-overview.puml`.
+
+Baseline triển khai: [ADR-0001](../architecture/adr/0001-p0-baseline.md), [API contract](../architecture/api-contract.md), [Database/ERD](../architecture/database-baseline.md). Đây là yêu cầu mục tiêu; code/schema có sẵn không tự chứng minh AC đã đạt.
 
 ## 1. Giới thiệu
 
@@ -19,7 +21,7 @@ SRS mô tả **hành vi kiểm chứng được** của BrewLite: chức năng (
 
 | Thuật ngữ | Định nghĩa |
 |---|---|
-| SKU | Biến thể bán được của một đồ uống theo `productId + sizeId`; có giá, on_hand và reserved |
+| SKU | Size thuộc Product; `Size.id` là SKU, có onHand/reserved; onHand NULL là chưa phân bổ và không được bán; không tạo ProductSKU |
 | Order | Đơn hàng; snapshot các dòng món, số lượng, giá, ưu đãi, chủ sở hữu và trạng thái |
 | Payment attempt | Một lần thực hiện thanh toán của một Order; có trạng thái riêng, không đồng nhất trạng thái Order |
 | Reservation | Số lượng SKU, quyền dùng coupon hoặc điểm được giữ chỗ, chưa trừ/tiêu dùng thật |
@@ -36,16 +38,16 @@ SRS mô tả **hành vi kiểm chứng được** của BrewLite: chức năng (
 
 ### 2.1. Hoạt động chính
 
-**Customer:** `Menu → Detail / Options → Cart → Checkout → Auth (nếu thiếu) → Coupon/Points (optional) → Server reprice → Stock check/reserve → PENDING_PAYMENT → Mock payment → Paid / Retry / Cancel → Order status / history`.  
-**Staff:** `Login → View paid orders → PREPARING → READY → COMPLETED`.  
-**Owner:** `Login → Manage products/SKU/menu, promotions, users/roles`.
+**Customer:** `Menu → Detail / Options → Cart → Xác nhận mua → Auth (nếu thiếu) → Coupon/Points (optional) → Server reprice → Stock check/reserve → PENDING_PAYMENT → Mock payment → Paid / Retry / Cancel → Order status / history`.
+**Staff:** `Login → View paid orders → PREPARING → READY → COMPLETED`.
+**ADMIN:** `Login → Manage products/SKU/menu, promotions, users/roles`.
 
 ### 2.2. Ngữ cảnh bên ngoài
 
 1. Next.js hiển thị dữ liệu từ NestJS qua HTTPS; không dùng dữ liệu giá từ client để tạo giao dịch.
 2. NestJS kết nối PostgreSQL qua mạng riêng, lưu order/attempt/reservation/loyalty events.
 3. Mock Payment Service xử lý `SUCCESS`, `FAILED`, `TIMEOUT/UNKNOWN`, status inquiry; **không chấp nhận dữ liệu thẻ thật**.
-4. OTP sandbox có test phone allowlist, không giả mạo việc gửi SMS thực; cần thay bằng nhà cung cấp đáng tin cậy nếu chuyển sang hoạt động thương mại.
+4. Gmail SMTP gửi OTP xác minh email qua TLS; App Password chỉ nằm trong cấu hình môi trường, không hiển thị OTP/secret trong JSON hoặc log.
 
 ## 3. Functional Requirements
 
@@ -55,30 +57,30 @@ SRS mô tả **hành vi kiểm chứng được** của BrewLite: chức năng (
 
 | ID | Mức | Yêu cầu hệ thống | Acceptance Criteria có thể kiểm chứng |
 |---|---|---|---|
-| FR-01 | Must | Hiển thị thực đơn sản phẩm đang bán cho khách chưa đăng nhập. | **AC-01:** `GET /products` trả list sản phẩm active với `id,name,basePrice,availableSizes,availability`; khi trống/timeout/error UI lần lượt hiển thị empty/error và có loading; không đưa sản phẩm đã ẩn vào danh sách. TC-04. |
+| FR-01 | Must | Hiển thị thực đơn sản phẩm đang bán cho khách chưa đăng nhập. | **AC-01:** GET /api/products trả catalog thật và availability theo Size; sản phẩm ẩn không xuất hiện; onHand NULL không thể đặt, 0 hiện Hết hàng; loading/empty/error/retry đầy đủ. TC-04. |
 | FR-02 | Must | Hiển thị chi tiết đồ uống. | **AC-02:** `GET /products/:id` trả tên/mô tả/size/topping/giá có thể chọn; ID không có hoặc ẩn trả 404 cho khách. TC-04. |
-| FR-03 | Must | Khách chọn size, topping, số lượng; UI báo giá tạm tính. | **AC-03:** size bắt buộc trong danh sách hợp lệ; topping active; số lượng nguyên 1–20/dòng; khi đổi tùy chọn/tăng số lượng, subtotal đổi đúng; dữ liệu sai trả 400. TC-05. |
-| FR-04 | Must | Chủ cửa hàng thêm/sửa/ẩn sản phẩm/SKU và trạng thái bán. | **AC-04:** OWNER thêm/sửa giá và trạng thái; thay đổi xuất hiện ở GET menu; một sản phẩm đã có đơn chỉ được ẩn/khóa bán, lịch sử đơn không bị đổi; CUSTOMER/STAFF gọi API quản trị nhận 403. TC-18. |
+| FR-03 | Must | Khách chọn size, topping, số lượng và xem preview giá. | **AC-03:** Size thuộc đúng Product, có thể bán và được phân bổ tồn; topping active; quantity nguyên 1–20; không tự bỏ options sai hoặc đổi size; Backend validate lại. TC-05. |
+| FR-04 | Must | Chủ cửa hàng thêm/sửa/ẩn sản phẩm/SKU và trạng thái bán. | **AC-04:** ADMIN thêm/sửa giá và trạng thái; thay đổi xuất hiện ở GET menu; một sản phẩm đã có đơn chỉ được ẩn/khóa bán, lịch sử đơn không bị đổi; CUSTOMER/STAFF gọi API quản trị nhận 403. TC-18. |
 
 ### 3.2. Giỏ hàng
 
 | ID | Mức | Yêu cầu hệ thống | Acceptance Criteria |
 |---|---|---|---|
 | FR-05 | Must | Thêm một cấu hình đồ uống (SKU+toppings) vào giỏ. | **AC-05:** Cart chứa product/size/topping/quantity/giá dự kiến; thêm cấu hình giống nhau được gộp số lượng; khác cấu hình là dòng khác; không vượt 20/dòng. TC-05. |
-| FR-06 | Must | Xem, tăng/giảm số lượng hoặc xóa dòng giỏ; giữ giỏ khi khách cần login. | **AC-06:** số lượng 0/xóa phải xóa dòng, giỏ không chứa số lượng âm; sau login khách vẫn thấy giỏ trước checkout; giỏ rỗng không thể `POST /orders`. TC-03/05. |
-| FR-07 | Must | Hiển thị tổng tạm tính và số tiền cuối cùng sau reprice. | **AC-07:** `POST /checkout/quote` trả tổng dự kiến do server tính mà không giữ chỗ; giá bị sửa trong HTTP request không ảnh hưởng; khi giá catalog đổi trước tạo đơn, UI yêu cầu khách xác nhận lại giá mới; `POST /orders` tính lại lần cuối, số tiền chốt khớp Order. TC-05. |
+| FR-06 | Must | Sửa/xóa giỏ và giữ dữ liệu qua đăng nhập. | **AC-06:** quantity 0/xóa sau xác nhận loại dòng; không âm; guest local merge sau login có idempotency/version; thất bại giữ local, không cắt quantity/options ngầm. Giỏ rỗng không tạo Order. TC-03/05. |
+| FR-07 | Must | Hiển thị tổng tạm tính và số tiền cuối cùng sau reprice. | **AC-07:** `POST /api/cart/calculate` trả tổng dự kiến do server tính mà không giữ chỗ; giá bị sửa trong HTTP request không ảnh hưởng; khi giá catalog đổi trước tạo đơn, UI yêu cầu khách xác nhận lại giá mới; `POST /orders` tính lại lần cuối, số tiền chốt khớp Order. TC-05. |
 
 ### 3.3. Đăng ký, đăng nhập và phân quyền
 
 | ID | Mức | Yêu cầu hệ thống | Acceptance Criteria |
 |---|---|---|---|
-| FR-08 | Must | Khách đăng ký bằng số điện thoại và OTP sandbox theo SP-03/04. | **AC-08:** số điện thoại được chuẩn hóa định dạng VN, không tạo tài khoản active khi OTP thiếu/sai/hết hạn/đã dùng; mỗi số active chỉ có 1 account; không hiển thị mã OTP thật trên production demo public. TC-01. |
-| FR-09 | Must | Khách/nhân viên/chủ đăng nhập bằng điện thoại+mật khẩu và đăng xuất. | **AC-09:** đúng thông tin cấp access+refresh session; sai không cấp; logout thu hồi refresh/server session, client xóa cookie/token; token đã thu hồi không làm việc với endpoint bảo vệ. TC-02. |
+| FR-08 | Must | Đăng ký bằng email và mật khẩu bcrypt, xác minh Gmail OTP. | **AC-08:** email canonical duy nhất; nhập password trước OTP; public register luôn CUSTOMER; chỉ emailVerifiedAt hợp lệ và isActive mới login; OTP không lộ cho client/log. TC-01; thay yêu cầu điện thoại/sandbox bản 1.0. |
+| FR-09 | Must | CUSTOMER/STAFF/ADMIN đăng nhập email+mật khẩu và đăng xuất. | **AC-09:** bcrypt compare, JWT access cookie HttpOnly 15 phút và refresh 7 ngày; credentials sai không cấp phiên; logout revoke family kể cả access expired và xóa hai cookies. TC-02. |
 | FR-10 | Must | NestJS kiểm tra JWT và RBAC/ownership cho API bảo vệ. | **AC-10:** thiếu/hết hạn/sai token trả 401; role thiếu quyền trả 403; khách A yêu cầu đơn khách B nhận 404 hoặc 403, không lộ dữ liệu; UI ẩn action không đủ quyền nhưng quyết định cuối tại API. SEC-01/02. |
-| FR-11 | Must | Chặn tạo đơn khi khách chưa đăng nhập và khôi phục checkout sau xác thực. | **AC-11:** click Đặt hàng khi anonymous chuyển tới login/register, không tạo order; xác thực thành công quay lại review giỏ còn nguyên; không thể bypass qua API. TC-03. |
-| FR-30 | Must | Sau khi OTP hợp lệ, người mới **thiết lập mật khẩu** trước khi dùng login bằng mật khẩu. | **AC-30:** đặt password dài tối thiểu 15 ký tự, cho phép tối thiểu 64 ký tự, kiểm tra danh sách mật khẩu yếu và không áp đặt kiểu pha trộn ký tự; không lưu plaintext; user không thể login mật khẩu trước bước này. TC-01. |
-| FR-31 | Must | Làm mới phiên bằng refresh token luân phiên, revoke khi logout. | **AC-31:** refresh hợp lệ cấp access mới và vô hiệu refresh cũ; replay refresh cũ bị từ chối; hết 7 ngày không refresh được; access hết 15 phút bị từ chối. SEC-02. |
-| FR-34 | Must | Giới hạn số lượt OTP/login không hợp lệ; phân biệt mock và nhà cung cấp OTP thật. | **AC-34:** OTP 6 chữ số dùng một lần, TTL5 phút, max 5 thử, cooldown 60 giây, max 3 mã/15 phút/số test; login giới hạn 10 lần sai/15 phút theo account+IP và trả thông báo chung, không cho phân biệt số điện thoại tồn tại. SEC-03. |
+| FR-11 | Must | Xác nhận mua kiểm tra xác thực và giữ giỏ. | **AC-11:** Giỏ → Xác nhận mua → kiểm tra phiên → login/register nếu thiếu → sau auth mới coupon/points và reprice; không bắt buộc màn Xem lại đơn trung gian; không có Order trước auth, không bypass API. TC-03. |
+| FR-30 | Must — CR-SEC-01 approved by requester | Mật khẩu nhập khi đăng ký, hash bcrypt; chỉ login sau xác minh email. | **AC-30:** tối thiểu 15 Unicode code points; tối đa 72 byte UTF-8, từ chối vượt giới hạn và không truncate/normalize. Yêu cầu cũ hỗ trợ 64 ký tự Unicode tùy ý chưa tương thích bcrypt trực tiếp; người yêu cầu đã phê duyệt CR-SEC-01; vẫn cần kiểm chứng toàn bộ acceptance trước nghiệm thu. Weak-password policy/test vẫn cần thực hiện. TC-01; không còn API set-password sau OTP. |
+| FR-31 | Must | Refresh token 7 ngày tuyệt đối, rotation và phát hiện reuse. | **AC-31:** opaque token hash DB, mỗi rotation một child trong AuthSession family; dùng lại token cũ thu hồi family; concurrent refresh chỉ một thắng; logout chặn replay; access 15 phút, không lưu token web storage. SEC-02. |
+| FR-34 | Must | Giới hạn OTP/login sai và kiểm chứng email thật. | **AC-34:** OTP6 số TTL5 phút, max5 thử, cooldown60s, max3 gửi/15 phút/email cùng IP limit; login max10 lần sai/15 phút theo account+IP; kiểm thử concurrency và Gmail thật tách biệt mock. SEC-03. |
 
 ### 3.4. Đặt hàng, ưu đãi và thanh toán (liên hệ chặt với Task 1.3)
 
@@ -87,10 +89,10 @@ SRS mô tả **hành vi kiểm chứng được** của BrewLite: chức năng (
 | FR-12 | Must | Chấp nhận **tối đa một mã giảm giá**, kiểm tra điều kiện trên backend. | **AC-12:** mã không tồn tại, bị tắt, hết hạn, không đủ min spend, hết quota, đã dùng vượt giới hạn trả lỗi rõ; khách nhập lại hoặc bỏ qua; coupon giảm không quá 50% subtotal; % từ 1–50; không tiêu lượt khi payment fail. TC-06. |
 | FR-13 | Must | Cho phép sử dụng điểm thưởng đã có. | **AC-13:** điểm nguyên, không quá available balance hoặc 20% after-coupon (quy ra 100 VND/điểm); không âm; điểm chỉ consume 1 lần sau paid, payment fail/hủy không bị trừ. TC-07. |
 | FR-14 | Must | Tính lại tổng phải trả ở backend theo SP-06…09. | **AC-14:** `payable = subtotal − couponDiscount − redeemPoints×100`; all values int VND; ví dụ 100.000 − 10.000 − 10.000 = 80.000; kết quả API order và số tiền gửi gateway bằng nhau; không cho client gửi tổng tùy ý. TC-05/06/07. |
-| FR-15 | Must | Kiểm tra tồn kho và tính khả dụng trước tạo đơn. | **AC-15:** API so sánh quantity theo SKU với available, topping active; thiếu hàng trả 409 với danh sách SKU lỗi; không tạo paid/order payable; UI cho sửa giỏ. TC-08. |
+| FR-15 | Must | Kiểm tra tồn theo Size.id trước tạo đơn. | **AC-15:** available=onHand-reserved; NULL là chưa sẵn sàng, không tự coi 0/vô hạn; gộp quantity mọi dòng cùng Size; thiếu/chưa phân bổ trả 409 + items, không tạo order, khách sửa giỏ. Quote không cam kết còn hàng. TC-08. |
 | FR-16 | Must | Tạo Order `PENDING_PAYMENT` và giữ chỗ hàng/coupon/điểm **trong transaction**. | **AC-16:** order có `orderId`, `ownerId`, snapshot items/total, `expiresAt = createdAt + 10 min`; trường hợp đủ hàng tạo reservation atomic; một constraint bị lỗi rollback toàn bộ; cùng key `POST /orders` không tạo order trùng. TC-09/10. |
 | FR-17 | Must | Tạo payment attempt cho ví hoặc thẻ **mô phỏng**, không thu tiền thật. | **AC-17:** chọn `MOCK_WALLET` hoặc `MOCK_CARD` kích hoạt mock service với orderId/amount/paymentRef; source type test, không nhập/lưu PAN/CVV; mock phản hồi SUCCESS/FAILED/UNKNOWN. TC-11. |
-| FR-18 | Must | Xác nhận thành công từ mock, chuyển reservation thành tiêu dùng và trả mã đơn. | **AC-18:** chỉ khi backend xác minh paymentRef+orderId+amount và trạng thái `SUCCEEDED`, 1 transaction duy nhất chuyển Order sang PAID, consume coupon/points, cập nhật tồn kho; 2 callback giống nhau có cùng kết quả, không trừ hai lần. TC-10/11. |
+| FR-18 | Must | Xác nhận thành công từ mock, chuyển reservation thành tiêu dùng và trả mã đơn. | **AC-18:** chỉ khi backend xác minh paymentRef+orderId+amount và trạng thái `SUCCESS`, 1 transaction duy nhất chuyển Order sang PAID, consume coupon/points, cập nhật tồn kho; 2 callback giống nhau có cùng kết quả, không trừ hai lần. TC-10/11. |
 | FR-19 | Must | Xử lý payment `FAILED` và cho retry hoặc cancel khi còn hiệu lực. | **AC-19:** UI hiện thất bại, chỉ tiếp tục attempt mới khi attempt trước FAILED, không tự tạo order mới; max 3 attempts trong TTL; khách hủy trước PAID → CANCELLED và release reservations 1 lần. TC-12. |
 | FR-20 | Must | Ngăn duplicate effect ở yêu cầu tạo Order, thanh toán và webhook/callback. | **AC-20:** key cùng account+endpoint+payload → order/attempt logic giống nhau; cùng key khác payload trả 409; callback trùng bị no-op; key lưu ít nhất 24h. INT-08/09. |
 | FR-32 | Must | Xử lý hết hạn, lỗi mạng và trạng thái thanh toán chưa rõ (`UNKNOWN`). | **AC-32:** sau 10 phút, chỉ cancel đơn chưa paid khi không có attempt UNKNOWN chưa reconcile; UNKNOWN có status inquiry, không tuyên bố FAILED/PAID; late success không âm thầm paid đơn CANCELLED; worker giải phóng đúng 1 lần. INT-10. |
@@ -101,10 +103,10 @@ SRS mô tả **hành vi kiểm chứng được** của BrewLite: chức năng (
 |---|---|---|---|
 | FR-21 | Must | Khách xem kết quả đặt hàng và trạng thái đơn mới nhất. | **AC-21:** sau PAID trả mã đơn; trang chi tiết có snapshot items, giá, trạng thái; người không sở hữu không đọc được. TC-13. |
 | FR-22 | Must | Khách xem lịch sử đơn của mình. | **AC-22:** `GET /orders` lọc theo actor đăng nhập, mặc định sắp xếp mới nhất, hỗ trợ phân trang, không thấy đơn người khác. TC-13. |
-| FR-23 | Must | Nhân viên nhận đơn trả tiền, cập nhật chuẩn bị/đã sẵn sàng/đã giao. | **AC-23:** STAFF xem `PAID` trở đi; chỉ cho `PAID→PREPARING→READY→COMPLETED`; chuyển nhảy hoặc lùi trả 409; history events lưu actor/time. TC-16. |
+| FR-23 | Must | STAFF nhận đơn đã trả tiền và cập nhật pha chế. | **AC-23:** hàng đợi PAID/PREPARING/READY; chỉ STAFF chuyển PAID→PREPARING→READY→COMPLETED; ADMIN chỉ giám sát; expectedVersion/idempotency, sai/lùi/nhảy trả 409; history lưu actor/time/from/to/version. TC-16. |
 | FR-24 | Must | Thông báo **trong ứng dụng** khi payment và order status đổi. | **AC-24:** sau thanh toán UI hiện success/fail/UNKNOWN đúng; sau refresh trang trạng thái hiện dữ liệu mới; không bắt buộc SMS/email/push. TC-13/16. |
-| FR-25 | Must | Owner quản lý mã giảm giá và quota. | **AC-25:** OWNER tạo/sửa/tắt coupon, điều kiện/valid range/limit; coupon disabled không được checkout; action khác role trả 403; quota reserved không vượt max. TC-18. |
-| FR-26 | Must | Owner quản lý người dùng/role và trạng thái tài khoản. | **AC-26:** OWNER liệt kê, vô hiệu hóa user, gán role theo whitelist; CUSTOMER/STAFF không thể tự nâng quyền qua API; user bị vô hiệu không đăng nhập được. TC-18. |
+| FR-25 | Must | ADMIN quản lý mã giảm giá và quota. | **AC-25:** ADMIN tạo/sửa/tắt coupon, điều kiện/valid range/limit; coupon disabled không được checkout; action khác role trả 403; quota reserved không vượt max. TC-18. |
+| FR-26 | Must | ADMIN quản lý người dùng/role và trạng thái tài khoản. | **AC-26:** ADMIN liệt kê, vô hiệu hóa user, gán role theo whitelist; CUSTOMER/STAFF không thể tự nâng quyền qua API; user bị vô hiệu không đăng nhập được. TC-18. |
 | FR-33 | Must | Hệ thống tích điểm khi đơn đã giao/hoàn thành. | **AC-33:** `floor(payable/10_000)` điểm được cộng **một lần khi COMPLETED**; replay status không cộng lại; CANCELLED hoặc chưa PAID không tích điểm. TC-17. |
 
 ### 3.6. Backlog: Should / Could / Won’t (giới hạn phạm vi)
@@ -128,11 +130,11 @@ SRS mô tả **hành vi kiểm chứng được** của BrewLite: chức năng (
 | BR-05 | Tối đa 01 coupon và các điểm hợp lệ, thứ tự tính như SP-07…09; money integer VND. |
 | BR-06 | Order status transitions chỉ theo SP-15; attempt status không đồng nghĩa order status. |
 | BR-07 | Không thực hiện thử thanh toán mới khi attempt cuối `UNKNOWN` chưa reconcile; giao dịch trùng không có side-effect lặp. |
-| BR-08 | Chỉ role STAFF/OWNER được cập nhật order operations; chỉ chủ sở hữu đọc order của chính họ. |
+| BR-08 | Chỉ STAFF cập nhật tiến độ pha chế; ADMIN giám sát; CUSTOMER chỉ đọc/thao tác đơn của mình; không actor người dùng nào tự set payment SUCCESS. |
 | BR-09 | Sau `PAID`, không có hủy/hoàn tiền trong MVP; nếu có nghiệp vụ mới phải tạo FR/UC mới. |
 | BR-10 | Payment mock là giả lập, không nhận/lưu thông tin thẻ thật hay gọi cổng live. |
 | BR-11 | Tích điểm đúng 1 lần khi order `COMPLETED`, bằng event/ledger có unique `orderId + earn_type`. |
-| BR-12 | Mọi timestamp DB là UTC, mọi mức tiền là VND nguyên; đổi timezone chỉ ở UI. |
+| BR-12 | Timestamp UTC; Decimal VND nguyên, không cộng tiền bằng floating-point Number; API money là chuỗi số nguyên. UI đổi timezone Asia/Ho_Chi_Minh. |
 
 ### 4.1. State model
 
@@ -143,8 +145,8 @@ SRS mô tả **hành vi kiểm chứng được** của BrewLite: chức năng (
 | Order | `PREPARING` | `READY` |
 | Order | `READY` | `COMPLETED` |
 | Order | `COMPLETED` / `CANCELLED` | Terminal, không được hồi sinh |
-| Payment attempt | `INITIATED` | `SUCCEEDED`, `FAILED`, `UNKNOWN` |
-| Payment attempt | `UNKNOWN` | Chỉ chuyển `SUCCEEDED`/`FAILED` khi hỏi lại nguồn mock; không tự kết luận |
+| Payment attempt | `PENDING` | `SUCCESS`, `FAILED`, `UNKNOWN` |
+| Payment attempt | `UNKNOWN` | Chỉ chuyển `SUCCESS`/`FAILED` khi hỏi lại nguồn mock; không tự kết luận |
 
 ### 4.2. Xử lý thất bại theo Task 1.3
 
@@ -161,26 +163,26 @@ SRS mô tả **hành vi kiểm chứng được** của BrewLite: chức năng (
 
 ### 5.1. UI
 
-Mobile-first Next.js/PWA. Trang tối thiểu: menu, product detail, cart, login/register+verify OTP+set password, checkout, mock-payment result, my orders/order details, staff orders, owner products/promotions/users. UI cần hiển thị loading/empty/error, retry phù hợp, không che giấu lỗi hoặc tự ghi trạng thái thành công.
+Mobile-first Next.js/PWA. Trang tối thiểu: menu, product detail, cart, login/register email+verify OTP, checkout, mock-payment result, my orders/order details, staff orders, admin products/promotions/users. UI cần hiển thị loading/empty/error, retry phù hợp, không che giấu lỗi hoặc tự ghi trạng thái thành công.
 
-### 5.2. Backend API endpoints tham chiếu
+### 5.2. Backend API contract
 
-| Nhóm | Endpoint tham chiếu | Quyền | Công dụng / ghi chú |
-|---|---|---|---|
-| Catalog | `GET /products`, `GET /products/:id` | Public | **Bắt buộc** Sprint 1 |
-| Account | `POST /auth/register`, `POST /auth/verify-otp`, `POST /auth/set-password` | Public/OTP verified | SP-03; tránh tự kích hoạt trước xác minh |
-| Session | `POST /auth/login`, `POST /auth/refresh`, `POST /auth/logout` | Mixed | JWT+revoke |
-| Cart | UI cart local/session; `POST /checkout/quote` (không side effect) | Customer | Không bắt buộc có `POST /cart`; giỏ có thể lưu client, server tính tổng lại tại quote và order |
-| Order | `POST /orders` | Customer | JWT + Idempotency-Key, snapshot/reserve |
-| Order | `GET /orders`, `GET /orders/:id`, `POST /orders/:id/cancel` | Customer/authorized | Owner check, cancel pending only |
-| Payment | `POST /orders/:id/payments`, `GET /orders/:id/payment-status` | Owner customer | Idempotency-Key, gateway mock, UNKNOWN reconciliation |
-| Staff | `GET /staff/orders`, `PATCH /staff/orders/:id/status` | Staff/Owner | Validate state machine |
-| Owner | `/admin/products`, `/admin/promotions`, `/admin/users` | Owner | CRUD có RBAC |
-| Health | `GET /health` | Public safe status only | Không lộ secret/connection detail |
+Contract đầy đủ tại [api-contract.md](../architecture/api-contract.md), RBAC tại [rbac-matrix.md](../architecture/rbac-matrix.md). Mọi route có prefix /api. API hiện có không đồng nghĩa đã đáp ứng tất cả AC.
 
-**HTTP status policy:** 400 bad input; 401 unauthenticated; 403 forbidden; 404 not found/obscure private ID; 409 conflict (out of stock, invalid state, idempotency key reuse with other payload); 422 business-rule violation (coupon/points). 5xx error server không được được diễn giải thành payment failed nếu chưa truy vấn status.
+| Nhóm | Contract mục tiêu | Quyền |
+| --- | --- | --- |
+| Catalog | GET /products, /products/:id, /toppings, /categories; availability Size | Public |
+| Account | POST /auth/register, /auth/verify-email, /auth/resend-otp | Public, không self-assign role |
+| Session | POST /auth/login, /auth/refresh, /auth/logout; GET /auth/me | Cookie/CSRF/session |
+| Cart | GET /cart, POST /cart/items, PATCH/DELETE /cart/items/:id, POST /cart/merge | CUSTOMER sở hữu |
+| Quote | POST /cart/calculate, không tạo Order/reservation | CUSTOMER |
+| Order | POST /orders; GET /orders, /orders/:id; POST /orders/:id/cancel | CUSTOMER sở hữu, idempotency/version |
+| Payment | POST /orders/:id/payments; GET /payments/:id | CUSTOMER sở hữu, mock only |
+| Staff | GET /staff/orders; PATCH /staff/orders/:id/status | STAFF cập nhật; ADMIN chỉ đọc hàng đợi |
+| Admin | Catalog/Size inventory/promotions/users/orders qua /admin/* | ADMIN; orders chỉ giám sát |
+| Health | GET /health | Public safe status |
 
-**API schema chi tiết, tên trường thực tế, error code và mock contract** phải định nghĩa khi Task 3/4 triển khai theo đúng SRS; danh sách trên là hợp đồng tham chiếu và không phải bằng chứng API đã tồn tại.
+PaymentStatus implementation giữ PENDING/SUCCESS/FAILED và bổ sung UNKNOWN; ánh xạ SRS cũ INITIATED→PENDING, SUCCEEDED→SUCCESS. Lỗi có code/message/details; HTTP 400/401/403/404/409/422/429; dependency unavailable 503. Không diễn giải timeout/5xx thành payment FAILED.
 
 ## 6. Non-functional Requirements (quality requirements)
 
@@ -191,7 +193,7 @@ Mobile-first Next.js/PWA. Trang tối thiểu: menu, product detail, cart, login
 | NFR-01 | Performance / Must | `GET /products` nhanh ở tải demo. | **PERF-01:** trên staging warm (>=2 vCPU, 4 GB RAM cho web+API+DB, seed 100 products/1.000 orders), k6 20 VUs 5 phút, warm-up 2 phút: p95 API từ gateway vào API đến response **≤2.000 ms**, lỗi không dự kiến **≤1%**. |
 | NFR-02 | Performance / Must | `POST /orders` và API cart/checkout không block bất thường. | **PERF-02:** cùng điều kiện, p95 **≤3.000 ms** cho Order creation không gồm thời gian chờ provider mock; report p50/p95/error rate; không tính lỗi 4xx do test cố ý. |
 | NFR-03 | Security / Must | JWT & RBAC & ownership trên mọi route cần auth. | **SEC-01:** unauthorized 401, forbidden 403, cross-account access denied, không thể sửa user role từ client. |
-| NFR-04 | Security / Must | Bảo vệ password, refresh, OTP và secret (định hướng NIST SP 800-63B-4 cho mật khẩu chỉ dùng một yếu tố). | **SEC-02/03:** Argon2id phù hợp cấu hình OWASP (hoặc phương án được ghi ADR và benchmark), không lưu plaintext; access 15m/refresh 7d+rotation/revoke, OTP controls; `git grep`/CI không thấy real secrets. |
+| NFR-04 | Security / Must | Bcrypt cost 12, OTP và refresh/secret được bảo vệ theo ADR. | **SEC-02/03:** không plaintext/token trong web storage/log; access15m/refresh7d rotation/revoke; CSRF và cookies; CR-SEC-01 về 72 byte vs 64 Unicode được người yêu cầu phê duyệt ngày 07/11/2026, không tự tuyên bố phù hợp toàn bộ tiêu chí cũ. |
 | NFR-05 | Reliability/integrity / Must | Atomic order, inventory, coupon, loyalty and idempotency. | **INT-05…10:** 2 request đồng thời trên 1 SKU cuối chỉ 1 thành công; retry/callback duplicate không trừ kho/điểm trùng; rollback hoàn toàn khi failure. |
 | NFR-06 | Usability / Must | Tất cả màn hình cốt lõi dùng mobile-first. | **UX-01:** kiểm thử viewport 360×800, 375×812, 768×1024, 1280×800; không tràn ngang do component của app; menu→checkout thực hiện được chỉ bằng chạm và bàn phím. |
 | NFR-07 | Accessibility / Should | Mục tiêu WCAG 2.2 mức A/AA cho tuyến menu→checkout. | **UX-02:** label liên kết input, focus visible, text contrast ≥4.5:1 (text thường), không dùng màu đơn độc báo lỗi; axe tự động không báo critical, manual keyboard pass. Chỉ tuyên bố target, không tuyên bố toàn hệ thống đạt WCAG khi chưa audit. |
@@ -213,7 +215,7 @@ Tạo `tests/performance/README.md` khi code thực tế để ghi **SHA commit,
 
 ## 7. Mô hình Use-case tổng quát — tài liệu kèm theo
 
-Nguồn có thể chỉnh sửa ở `docs/diagrams/usecase-overview.puml`, hiển thị các actor: Customer, Staff, Owner, Mock Payment Service. Use-case nhóm đang có được giữ về mặt chủ thể; bổ sung `Xem thực đơn`, `Xem chi tiết sản phẩm`, `Theo dõi đơn`, `Thiết lập mật khẩu`, tách `Thanh toán mô phỏng` và `Quản lý khuyến mãi` cho đủ phạm vi.
+Nguồn có thể chỉnh sửa ở `docs/diagrams/usecase-overview.puml`, hiển thị các actor: Customer, Staff, Owner, Mock Payment Service. Use-case nhóm đang có được giữ về mặt chủ thể; bổ sung `Xem thực đơn`, `Xem chi tiết sản phẩm`, `Theo dõi đơn`, `Đăng ký email/password và xác minh OTP`, tách `Thanh toán mô phỏng` và `Quản lý khuyến mãi` cho đủ phạm vi.
 
 **Lưu ý UML:** Use-case không phải nơi diễn tả mọi bước nội bộ (JWT, transaction, reserve)—chúng thuộc activity/sequence/business rules. Các `include` bắt buộc và `extend` tùy điều kiện phải dùng đúng chiều quan hệ; không mô hình hóa cập nhật status sau thanh toán thành một hành vi tùy chọn nếu nó bắt buộc xảy ra khi success.
 
@@ -255,3 +257,12 @@ Nguồn có thể chỉnh sửa ở `docs/diagrams/usecase-overview.puml`, hiể
 8. OWASP Password Storage: https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html
 9. NIST SP 800-63B-4 (password authenticator): https://pages.nist.gov/800-63-4/sp800-63b.html
 10. OWASP Business Logic Security: https://cheatsheetseries.owasp.org/cheatsheets/Business_Logic_Security_Cheat_Sheet.html
+
+## 11. P0 change record — 1.1.0 (07/11/2026)
+
+- Thay điện thoại/OTP sandbox/set-password sau OTP bằng email + bcrypt trước Gmail OTP; refresh family và bootstrap ADMIN được đặc tả trong docs/architecture.
+- OWNER/MANAGER không là hai role quản trị song song: target ADMIN, legacy mapping có review; STAFF-only pha chế.
+- Size.id là SKU; không ProductSKU; NULL stock chưa sẵn sàng. Giữ 16 bảng, thêm 5 bảng có mục đích nghiệp vụ theo database baseline.
+- Giữ quote /api/cart/calculate, tiền Decimal VND nguyên/JSON string; pricing và reservation theo policy; không coi quote giữ hàng.
+- CR-SEC-01 tách riêng thay đổi acceptance mật khẩu Unicode/bcrypt, đã được người yêu cầu phê duyệt ngày 07/11/2026. Chưa sửa tests/acceptance-test-cases.md; checklist cập nhật tests thuộc PR implementation.
+- Các Use Case/Activity/Class/Sequence gốc thiếu source không được coi đã cập nhật; xem UML checklist. Không ghi stakeholder/giảng viên đã phê duyệt nếu thiếu evidence.

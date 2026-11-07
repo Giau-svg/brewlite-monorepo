@@ -1,4 +1,5 @@
 @startuml
+' P0 2026-11-07: source labels updated; exported SVG/VP Class/Activity not regenerated.
 left to right direction
 skinparam defaultFontName Arial
 skinparam packageStyle rectangle
@@ -7,9 +8,9 @@ skinparam usecaseBackgroundColor #F4FAFF
 skinparam usecaseBorderColor #35567C
 skinparam actorBorderColor #333333
 
-actor "Khách hàng" as C
-actor "Nhân viên pha chế" as S
-actor "Chủ cửa hàng" as O
+actor "Khách hàng\n(CUSTOMER / Guest)" as C
+actor "Nhân viên pha chế\n(STAFF)" as S
+actor "Chủ cửa hàng\n(ADMIN)" as O
 actor "Cổng thanh toán\nmô phỏng" as P
 
 rectangle "BrewLite System — MVP Assignment 2" {
@@ -17,8 +18,8 @@ rectangle "BrewLite System — MVP Assignment 2" {
   usecase "Xem chi tiết sản phẩm" as UC02
   usecase "Chọn size/topping" as UC03
   usecase "Quản lý giỏ hàng" as UC04
-  usecase "Đăng ký/OTP và\nthiết lập mật khẩu" as UC05
-  usecase "Đăng nhập" as UC06
+  usecase "Đăng ký email/password\nvà xác minh Gmail OTP" as UC05
+  usecase "Đăng nhập email/password" as UC06
   usecase "Đăng xuất" as UC07
   usecase "Đặt và thanh toán đơn" as UC08
   usecase "Kiểm tra tồn kho" as UC09
@@ -32,6 +33,7 @@ rectangle "BrewLite System — MVP Assignment 2" {
   usecase "Quản lý thực đơn" as UC17
   usecase "Quản lý khuyến mãi" as UC18
   usecase "Quản lý người dùng" as UC19
+  usecase "Giám sát đơn\n(chỉ đọc)" as UC20
 }
 
 C -- UC01
@@ -52,6 +54,11 @@ O -- UC07
 O -- UC17
 O -- UC18
 O -- UC19
+O -- UC20
+note right of O
+  ADMIN giám sát đơn, không cập nhật pha chế.
+  Không tự xác nhận payment SUCCESS.
+end note
 P -- UC11
 
 UC08 ..> UC09 : <<include>>

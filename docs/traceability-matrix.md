@@ -1,49 +1,49 @@
-# BrewLite — Requirements Traceability Matrix (RTM)
+# BrewLite — Requirements Traceability Matrix
 
-**Version:** 1.0.0 candidate · **Status:** DESIGN/PLANNED — **không có bằng chứng code/test thực thi**.
+Version 1.1 P0 · 2026-11-07. Target baseline theo quyết định người yêu cầu, chưa có PR/sign-off nhóm; CR-SEC-01 pending. Không chạy test hoặc ghi database trong P0.
 
-Đường truy vết: `Nguồn → FR/NFR → UC/Activity → API/module → Test design → Evidence sau này`. Các mã `UC01…UC19` khớp với alias trong sơ đồ PlantUML kèm theo; chúng là tham chiếu cho nhóm đồng bộ, **không khẳng định các bản UML cũ đã được cập nhật**.
+Phân loại: **CODE** = đã thấy source, chưa tự kết luận toàn bộ AC đạt; **DB/SEED** = schema/dữ liệu mẫu; **TARGET** = cần implement. Kết quả test lượt trước được ghi trong [architecture index](architecture/README.md), không phải chứng nhận Gmail/refresh/Order E2E mới. Mọi evidence nghiệm thu phải có test log + SHA/CI link thực.
 
 ## Functional requirements
 
-| Requirement | Mức | Nguồn | Use-case/Activity | Component/API dự kiến | Test cases | Implementation/evidence |
-|---|---|---|---|---|---|---|
-| FR-01 | Must | [A]+[U]+[D] | UC01 (Menu) | `GET /products` | TC-04 | Implemented (NestJS + Prisma); Unit tested |
-| FR-02 | Must | [A]+[U]+[D] | UC02 (Menu) | `GET /products/:id` | TC-04 | Implemented (NestJS + Prisma); Unit tested |
-| FR-03 | Must | [A]+[U]+[D] | UC03 (Menu) | `Catalog/Cart` | TC-05 | Planned; PR/SHA: — |
-| FR-04 | Must | [U]+[D] | UC17 (Owner) | `/admin/products` | TC-18 | Planned; PR/SHA: — |
-| FR-05 | Must | [A]+[U]+[D] | UC04 (Cart) | `UI cart` | TC-05 | Planned; PR/SHA: — |
-| FR-06 | Must | [A]+[U]+[D] | UC04 (Cart) | `UI cart` | TC-03/05 | Planned; PR/SHA: — |
-| FR-07 | Must | [A]+[U]+[D] | UC08 (Cart) | `POST /cart/calculate` | TC-05 | Implemented (Cart & Pricing engine); Tested |
-| FR-08 | Must | [A]+[U]+[D] | UC05 (Auth) | `/auth/register` | TC-01 | Planned; PR/SHA: — |
-| FR-09 | Must | [A]+[U]+[D] | UC06/UC07 (Auth) | `/auth/login/logout` | TC-02 | Planned; PR/SHA: — |
-| FR-10 | Must | [A]+[U]+[D] | UC08 (Auth) | `JWT/RBAC` | SEC-01/02 | Planned; PR/SHA: — |
-| FR-11 | Must | [U]+[D] | UC08 (Auth) | `POST /orders` | TC-03 | Planned; PR/SHA: — |
-| FR-30 | Must | [U]+[D] | UC05 (Auth) | `/auth/set-password` | TC-01 | Planned; PR/SHA: — |
-| FR-31 | Must | [U]+[D] | UC06 (Auth) | `/auth/refresh` | SEC-02 | Planned; PR/SHA: — |
-| FR-34 | Must | [U]+[D] | UC05 (Auth) | `OTP and auth throttles` | SEC-03 | Planned; PR/SHA: — |
-| FR-12 | Must | [U]+[D] | UC12 (Checkout) | `Coupon validator` | TC-06/INT-07 | Implemented (Promotion validation in CartService); Tested |
-| FR-13 | Must | [U]+[D] | UC13 (Checkout) | `Loyalty service` | TC-07/INT-06 | Planned; PR/SHA: — |
-| FR-14 | Must | [U]+[D] | UC08 (Checkout) | `Pricing service` | TC-05/06/07 | Implemented (`calculateQuote` with Size, Toppings, Voucher); Tested |
-| FR-15 | Must | [A]+[U]+[D] | UC09 (Checkout) | `Inventory service` | TC-08/INT-05 | Planned; PR/SHA: — |
-| FR-16 | Must | [A]+[U]+[D] | UC10 (Checkout) | `POST /orders` | TC-09/INT-05 | Planned; PR/SHA: — |
-| FR-17 | Must | [A]+[U]+[D] | UC11 (Payment) | `POST /orders/:id/payments` | TC-11 | Planned; PR/SHA: — |
-| FR-18 | Must | [A]+[U]+[D] | UC11 (Payment) | `Mock webhook/DB` | TC-10/INT-09 | Planned; PR/SHA: — |
-| FR-19 | Must | [A]+[U]+[D] | UC11 (Payment) | `Cancel/retry API` | TC-12 | Planned; PR/SHA: — |
-| FR-20 | Must | [A]+[U]+[D] | UC11 (Payment) | `Idempotency store` | INT-08/09 | Planned; PR/SHA: — |
-| FR-32 | Must | [U]+[D] | UC11 (Payment) | `Worker+reconciliation` | TC-12/INT-10 | Planned; PR/SHA: — |
-| FR-21 | Must | [A]+[U]+[D] | UC15 (Orders) | `GET /orders/:id` | TC-13 | Planned; PR/SHA: — |
-| FR-22 | Must | [A]+[U]+[D] | UC14 (Orders) | `GET /orders` | TC-13 | Planned; PR/SHA: — |
-| FR-23 | Must | [A]+[U]+[D] | UC16 (Staff) | `PATCH /staff/orders/:id/status` | TC-16 | Planned; PR/SHA: — |
-| FR-24 | Must | [A]+[U]+[D] | UC15 (Orders) | `UI notification` | TC-13/16 | Planned; PR/SHA: — |
-| FR-25 | Must | [U]+[D] | UC18 (Owner) | `/admin/promotions` | TC-18/INT-07 | Planned; PR/SHA: — |
-| FR-26 | Must | [U]+[D] | UC19 (Owner) | `/admin/users` | TC-18 | Planned; PR/SHA: — |
-| FR-33 | Must | [U]+[D] | UC16 (Orders) | `Loyalty ledger` | TC-17 | Planned; PR/SHA: — |
-| FR-27 | Won’t | [D] exclusion | Out of scope (Excluded) | `—` | — | Planned; PR/SHA: — |
-| FR-28 | Won’t | [D] exclusion | Out of scope (Excluded) | `—` | — | Planned; PR/SHA: — |
-| FR-29 | Could | [D] backlog | Future backlog (Backlog) | `—` | — | Planned; PR/SHA: — |
-| FR-35 | Should | [D] backlog | UC01 (Backlog) | `Catalog filtering` | Planned if included | Planned; PR/SHA: — |
-| FR-36 | Could | [D] backlog | Out of scope now (Backlog) | `—` | — | Planned; PR/SHA: — |
+| Requirement | Schema target | API target (prefix /api) | UI | Tests / acceptance | As-Is và PR |
+| --- | --- | --- | --- | --- | --- |
+| FR-01 | Product/Category/Size inventory | GET /products | Menu | TC-04: hidden, availability, NULL/zero stock | CODE catalog; inventory TARGET P3 |
+| FR-02 | Product/Size/Topping | GET /products/:id | Detail | TC-04: hidden 404, options thật | CODE; hidden behavior cần sửa P3 |
+| FR-03 | Size/CartItemTopping | catalog + cart validation | Size/topping/qty | TC-05: sai options không bỏ ngầm, qty1..20 | CODE preview; server options gap P3/P4 |
+| FR-04 | Product/Category/Size/Topping | /admin/products, /admin/sizes | Admin catalog/inventory | TC-18: RBAC, lịch sử không đổi | TARGET P8 |
+| FR-05 | CartItem size/key + CartItemTopping | POST /cart/items, /cart/merge | Cart | TC-05: khác size/note tách dòng, key chuẩn | CODE local; DB chưa đủ P3 |
+| FR-06 | Cart.version, cart configuration | PATCH/DELETE /cart/items/:id | Cart/edit/confirm delete | TC-03/05: merge fail giữ local, version conflict | CODE local; sync TARGET P3 |
+| FR-07 | Pricing/Promotion/User points | POST /cart/calculate | Quote sau Auth | TC-05: reprice, money string, quote không reserve | CODE nhưng policy/typing chưa đủ P4 |
+| FR-08 | User/EmailVerification | register/verify-email/resend-otp | Email + OTP | TC-01: Gmail thật, OTP5m/max5 | CODE OTP10m; email mới theo P1 |
+| FR-09 | User/AuthSession | login/logout/me | Account | TC-02: cookies, disabled/unverified, revoke | CODE access; refresh TARGET P1 |
+| FR-10 | User roles/session/ownership | guards mọi API protected | Role views | SEC-01/02: CUSTOMER/STAFF/ADMIN, IDOR | CODE guards; target RBAC còn thiếu P1/P8 |
+| FR-11 | Auth + cart + Order | me/refresh và POST /orders | Xác nhận mua→Auth→coupon | TC-03: giữ giỏ, chặn anonymous tạo order | CODE PurchaseFlow; orders TARGET P5 |
+| FR-12 | Promotion + OrderReservation | /cart/calculate, /orders | Coupon | TC-06/INT-07: cap50%, quota held, rollback | CODE validator một phần; P4/P5 |
+| FR-13 | User.reservedPoints, reservation/ledger | quote/orders/payments | Dùng điểm | TC-07/INT-06:100đ, cap20%, balance/held | CODE1000đ lệch; P4/P5/P6 |
+| FR-14 | Decimal/snapshots | quote/orders | Total | TC-05/06/07:100000-10000-10000=80000 | CODE Number hiện tại; TARGET P4 |
+| FR-15 | Size.onHand/reserved | quote/orders | Availability/hết hàng | TC-08/INT-05: aggregate same Size, NULL block | Product stock CODE; SKU TARGET P3/P5 |
+| FR-16 | Order/OrderItem/OrderReservation | POST /orders | Pending order | TC-09/INT-05: atomic reserve, expires10m | DB/SEED; TARGET P5 |
+| FR-17 | Payment attempts/Event | POST /orders/:id/payments | Mock wallet/card | TC-11: không PAN/CVV/tiền thật | DB/SEED; TARGET P6 |
+| FR-18 | PaymentEvent/reservation/ledger | internal verified callback | Payment result | TC-10/11: consume một lần, amount check | DB/SEED; TARGET P6 |
+| FR-19 | Payment attempt/Order | retry/cancel | Retry/cancel | TC-12: max3, key cũ/mới đúng | TARGET P6 |
+| FR-20 | IdempotencyRecord/PaymentEvent | create/order/payment/status | Retry an toàn | INT-08/09: same/different payload, event duplicate | TARGET P5/P6/P7 |
+| FR-21 | Order snapshots/history | GET /orders/:id | Order detail | TC-13: ownership/status thật | UI placeholder; TARGET P7 |
+| FR-22 | Order userId index | GET /orders | History | TC-13: phân trang, chỉ own orders | UI placeholder; TARGET P7 |
+| FR-23 | Order.version/StatusHistory | staff orders + PATCH status | STAFF queue | TC-16: sequential, actor/time, ADMIN cannot write | TARGET P7 |
+| FR-24 | Notification.order/eventKey | notifications/status | In-app result | TC-13/16: no false SUCCESS, event dedupe | DB/SEED; TARGET P7 |
+| FR-25 | Promotion reservedCount | /admin/promotions | ADMIN promotions | TC-18/INT-07:quota không thấp hơn held+used | DB/SEED; TARGET P8 |
+| FR-26 | User roles/isActive | /admin/users | ADMIN users/bootstrap | TC-18: whitelist, last-admin, no public elevate | CODE list only; TARGET P1/P8 |
+| FR-27 | — | — | Không delivery | Out of scope | Won't, không test Passed giả |
+| FR-28 | Payment mock only | Không live gateway | Không card thật | Không PAN/CVV, không tiền thật | Won't live payment |
+| FR-29 | — | — | Analytics nâng cao | Chỉ nếu scope sau được duyệt | Could, không chặn MVP |
+| FR-30 | User.passwordHash | register (không set-password sau OTP) | Password input | TC-01/CR-SEC-01: Unicode vs72byte, no truncate | CODE bcrypt; CR acceptance pending P1 |
+| FR-31 | AuthSession family/hash | POST /auth/refresh | Axios single-flight | SEC-02: rotation/reuse/7d/logout expired access | TARGET P1 |
+| FR-32 | Payment UNKNOWN/reservation expiry | inquiry/worker/cancel | Unknown result | INT-10: không retry/cancel mù, late event | TARGET P6 |
+| FR-33 | LoyaltyTransaction.orderId unique | STAFF completed service | Points/history | TC-17: floor(payable/10000), exactly once | DB/SEED; TARGET P7 |
+| FR-34 | OTP/session rate controls | auth routes | OTP/retry errors | SEC-03:5m,max5,cooldown60s,3/15m,email+IP | CODE limits khác target; P1 |
+| FR-35 | Product/Category | GET /products | Search/category | Tìm có/không dấu, no-result/reset | CODE, tests hiện có; hồi quy P3/P9 |
+| FR-36 | — | — | Push/multi-store | Ngoài MVP | Could, không tự triển khai |
 
 ## Non-functional requirements
 
@@ -85,3 +85,11 @@
 | E4/A4 hết hàng | FR-15/16 | TC-08/INT-05 | 409, không tạo payable order |
 | E5/A5 payment failed | FR-17/19/20/32 | TC-11/12/INT-10 | Retry hoặc cancel/release an toàn |
 | Timeout/UNKNOWN bổ sung | FR-20/32 | INT-10 | Reconcile, không kết luận sai/nhân đôi |
+
+## P0 review gates và tài liệu test legacy
+
+[API contract](architecture/api-contract.md), [DB](architecture/database-baseline.md), [RBAC](architecture/rbac-matrix.md), [Auth](architecture/auth-session-spec.md), [state machine](architecture/order-payment-state-machine.md), [PR plan](architecture/implementation-plan.md) là nguồn chi tiết cho từng dòng.
+
+`tests/acceptance-test-cases.md` vẫn là test design bản cũ (phone/OWNER/set-password); P0 không sửa file ngoài docs. P1/P9 phải cập nhật test scenarios cho email/bcrypt/refresh/STAFF-only và ghi evidence thật. FR/NFR IDs giữ nguyên; không xóa tests cũ để che thay đổi. UML export/nguồn thiếu ghi trong [checklist](architecture/uml-update-checklist.md).
+
+Pending: CR-SEC-01 (Backend/QA/Product), mapping ADMIN, phân bổ Size stock, dữ liệu CartItem legacy. Không có PR/SHA/CI link nào được tự gán vào các gates này.

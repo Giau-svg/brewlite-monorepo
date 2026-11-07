@@ -1,11 +1,11 @@
 # BREWLITE — CONTEXT, STAKEHOLDERS & SCOPE
 
-**Mã tài liệu:** BL-REQ-01  
-**Assignment:** 2 — Task 1.1  
-**Phiên bản:** 1.0.0 — *candidate baseline, sẵn sàng để nhóm duyệt*  
-**Ngày lập:** 29/10/2026  
-**Owner đề xuất:** Product Owner/Business Analyst của nhóm  
-**Trạng thái phê duyệt:** **Chưa có minh chứng nhóm/giảng viên ký duyệt**; các quyết định SP-01…SP-16 là cấu hình thiết kế *được đề xuất và ghi rõ*, không phải quy định của chuẩn hay lời khẳng định đã được khách hàng phê duyệt.  
+**Mã tài liệu:** BL-REQ-01
+**Assignment:** 2 — Task 1.1
+**Phiên bản:** 1.1.0 P0 — *candidate baseline, sẵn sàng để nhóm duyệt*
+**Ngày lập:** 07/11/2026
+**Owner đề xuất:** Product Owner/Business Analyst của nhóm
+**Trạng thái phê duyệt:** **Chưa có minh chứng nhóm/giảng viên ký duyệt**; các quyết định SP-01…SP-16 là cấu hình thiết kế *được đề xuất và ghi rõ*, không phải quy định của chuẩn hay lời khẳng định đã được khách hàng phê duyệt.
 **Liên kết:** `srs.md` · `product-policy-and-approvals.md` · `../traceability-matrix.md` · use-case Task 1.3 và activity Task 2.1 do nhóm cung cấp.
 
 ## 1. Tóm tắt điều hành
@@ -42,17 +42,18 @@ BrewLite là **ứng dụng đặt đồ uống tại một cửa hàng, nhận 
 | Xem menu/chi tiết sản phẩm | Có | Có | Có | Có |
 | Cập nhật giỏ | Có | Có | — | — |
 | Đặt và thanh toán; xem đơn của chính mình | Không | Có | — | — |
-| Xem danh sách đơn trả tiền, cập nhật tiến độ | — | — | Có | Có¹ |
+| Xem danh sách đơn trả tiền | — | — | Có | Có |
+| Cập nhật tiến độ pha chế | — | — | Có | Không |
 | Quản lý sản phẩm/menu | — | — | — | Có |
 | Quản lý khuyến mãi, tài khoản, phân quyền | — | — | — | Có |
 
-¹ Quyền chủ cửa hàng xem/cập nhật đơn là quyền giám sát theo vai trò quản lý trong bản triển khai đề xuất. Mọi API phải thực thi RBAC phía server; không suy quyền từ UI.
+Chủ cửa hàng là ADMIN chỉ giám sát đơn; STAFF mới được chuyển trạng thái pha chế. CUSTOMER là khách đăng nhập; MANAGER legacy không tự alias sang ADMIN.
 
 ## 5. Ranh giới sản phẩm
 
 ### 5.1 In scope — MVP bàn giao cuối Sprint 2
 
-**Khách hàng:** Xem menu/chi tiết; chọn size, topping, số lượng; giỏ hàng; đăng ký bằng số điện thoại/OTP mô phỏng có kiểm soát; thiết lập mật khẩu; đăng nhập bằng số điện thoại/mật khẩu; JWT/đăng xuất; áp dụng mã giảm giá và điểm; giá/tổng tiền tính trên server; kiểm tra và giữ chỗ tồn kho; tạo đơn chờ thanh toán; thanh toán ví/thẻ mô phỏng; xử lý thất bại/thử lại/hủy/hết hạn; xem mã đơn, trạng thái, lịch sử.
+**Khách hàng:** Xem menu/chi tiết; chọn size, topping, số lượng; giỏ hàng; đăng ký email + mật khẩu bcrypt trước Gmail OTP; xác minh email trước login; JWT access15m + refresh7d rotation/đăng xuất; áp dụng mã giảm giá và điểm; giá/tổng tiền tính trên server; kiểm tra và giữ chỗ tồn kho; tạo đơn chờ thanh toán; thanh toán ví/thẻ mô phỏng; xử lý thất bại/thử lại/hủy/hết hạn; xem mã đơn, trạng thái, lịch sử.
 
 **Nhân viên:** Đăng nhập, xem danh sách đơn đã trả tiền, chi tiết tùy chọn đồ uống, chuyển trạng thái chuẩn bị/sẵn sàng/đã giao; thông tin đơn trả về UI cho khách.
 
@@ -83,7 +84,7 @@ Thanh toán tiền thật; kết nối live ngân hàng/ví; lưu chi tiết th�
 | AS-01 | Một cửa hàng, đơn nhận tại quầy | Phải bổ sung vận chuyển/địa điểm | Review owner / kịch bản |
 | AS-02 | Khách vãng lai có thể tạo giỏ; checkout phải đăng nhập | Thay đổi UC E1/A1 và JWT | Demo checkout |
 | AS-03 | Cổng thanh toán chỉ mô phỏng, hỗ trợ success/fail/status | Phải đổi workflow payment | Contract test mock |
-| AS-04 | Mỗi biến thể sản phẩm (`product + size`) là một SKU tồn kho; topping có flag khả dụng | Cần mô hình kho nguyên liệu | Review dữ liệu seed |
+| AS-04 | Size.id là SKU của Product, có onHand/reserved; NULL chưa phân bổ không thể bán; topping có flag khả dụng | Cần mô hình kho nguyên liệu | Review dữ liệu seed |
 | AS-05 | Giá và tồn kho do server quản lý; mọi đơn lưu snapshot giá và tùy chọn | Khó truy vết thay đổi giá | Integration test |
 | AS-06 | Có thể áp dụng tối đa 1 mã và điểm thưởng trong cùng đơn | Thay đổi tính giá, loyalty | Xem ví dụ tiền tại policy |
 | AS-07 | Không có hủy/hoàn tiền sau `PAID` trong MVP | Cần refund use-case | Review luồng đơn |
@@ -110,14 +111,14 @@ Thanh toán tiền thật; kết nối live ngân hàng/ví; lưu chi tiết th�
 | RK-02 | Payment retry/callback trùng | Cao / Cao | Unique payment reference, key + payload fingerprint, event dedupe; INT-08/09 |
 | RK-03 | Thanh toán đã thành công nhưng client timeout | Trung bình / Cao | Status inquiry; không mặc định thất bại; INT-10 |
 | RK-04 | Point/coupon concurrent use | Trung bình / Cao | Reserve trong transaction, release khi hủy/TTL; INT-06/07 |
-| RK-05 | OTP mock bị hiểu nhầm là xác minh SMS thật | Trung bình / Cao | Demo-only test phone allowlist; cảnh báo rõ; không công bố sản phẩm bảo mật production thực |
+| RK-05 | OTP Gmail thất bại hoặc hiểu nhầm mock là email thật | Trung bình / Cao | Credentials riêng trong .env, TLS, rate limits, kiểm chứng mailbox thật; không trả/log OTP |
 | RK-06 | JWT/role/IDOR sai | Trung bình / Cao | RBAC owner checks, automated 401/403/404; SEC-01…04 |
 | RK-07 | Deploy thất bại cuối kỳ | Trung bình / Cao | Deploy staging sớm, health+smoke, release tag, rollback drill |
 | RK-08 | Tài liệu, UC và activity lệch trạng thái | Cao / Trung bình | Ma trận FR ↔ UC ↔ diagram ↔ test, change checklist |
 
 ## 9. Phụ thuộc và acceptance boundary
 
-**Bên ngoài:** giả lập thanh toán, dịch vụ OTP thử nghiệm, hạ tầng deploy; công nghệ này không cam kết SLA thương mại. **Bên trong:** đã có Task 1.3 và Activity 2.1 bản nháp, còn cần đồng bộ theo impact list tại `product-policy-and-approvals.md`.
+**Bên ngoài:** giả lập thanh toán, Gmail SMTP xác minh email, hạ tầng deploy; công nghệ này không cam kết SLA thương mại. **Bên trong:** đã có Task 1.3 và Activity 2.1 bản nháp, còn cần đồng bộ theo impact list tại `product-policy-and-approvals.md`.
 
 **Điều kiện sẵn sàng nghiệm thu Task 1.1:** (1) có stakeholder và mục tiêu; (2) in/out/future scope rõ; (3) assumption khác constraint; (4) risk có control; (5) có định danh chính sách và version; (6) lưu repo. **Điều kiện gọi là “đã phê duyệt”**: người có thẩm quyền nhóm/đại diện chủ cửa hàng đã ghi quyết định trong PR/issue hoặc biên bản. Tài liệu hiện chưa có bằng chứng đó.
 
@@ -129,3 +130,9 @@ Thanh toán tiền thật; kết nối live ngân hàng/ví; lưu chi tiết th�
 4. ISO/IEC/IEEE 29148:2018 (hướng dẫn kỹ nghệ yêu cầu), ISO/IEC 25010:2023 (mô hình chất lượng), OWASP ASVS 5.0, WCAG 2.2 — tài liệu tham chiếu, **không tự động thay thế** phạm vi đề bài.
 
 Thông tin nguồn và URL tại `product-policy-and-approvals.md`.
+
+## P0 baseline 1.1 — thay đổi phạm vi và trạng thái
+
+Theo [ADR-0001](../architecture/adr/0001-p0-baseline.md): không tạo ProductSKU, dùng Size.id; giữ 16 bảng + 5 bảng có mục đích. ADMIN không pha chế hoặc tự set payment SUCCESS. Luồng khách không bắt buộc màn Xem lại đơn: Giỏ → Xác nhận mua → kiểm tra Auth → coupon/điểm → reprice/reserve → pending → mock payment.
+
+Yêu cầu email/bcrypt/Gmail thay phone/sandbox bản 1.0. CR-SEC-01 về tối đa72 byte UTF-8 vs64 Unicode cần phê duyệt riêng trước nghiệm thu; không giảm acceptance ngầm. Nguồn VP/Activity/Sequence và Assignment PDF chưa có trong repo đã kiểm tra; [UML checklist](../architecture/uml-update-checklist.md) ghi phần còn cần đồng bộ. Chưa tự xác nhận nhóm/giảng viên phê duyệt.

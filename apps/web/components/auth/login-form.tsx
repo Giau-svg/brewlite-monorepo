@@ -1,119 +1,87 @@
 "use client";
 
+import { validPassword } from '../../lib/password-policy';
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import "./login-form.css";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { authError, login, register, resendOtp, verifyEmail, type AuthUser } from "../../services/auth.service";
+import { setAuthUser } from "../../lib/auth-store";
+import "./login-form.css";
 
-function EyeIcon({ hidden }: { hidden: boolean }) {
-  return (
-    <svg
-      aria-hidden="true"
-      width="22"
-      height="22"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.7"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M2.5 12s3.5-6.5 9.5-6.5 9.5 6.5 9.5 6.5-3.5 6.5-9.5 6.5S2.5 12 2.5 12Z" />
-      <circle cx="12" cy="12" r="3" />
-      {hidden && <path d="M3 3 21 21" />}
-    </svg>
-  );
-}
-
-export default function LoginForm({ onClose, initialMode = "login" }: { onClose?: () => void; initialMode?: "login" | "register" } = {}) {
+type Mode = "login" | "register" | "verify";
+export default function LoginForm({ onClose, initialMode = "login", onSuccess }: { onClose?: () => void; initialMode?: "login" | "register"; onSuccess?: (user: AuthUser) => void } = {}) {
+  const router = useRouter();
   const dialogRef = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     if (!onClose) return;
     const dialog = dialogRef.current;
-    const previousOverflow = document.body.style.overflow;
+    const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     dialog?.showModal();
-    return () => { dialog?.close(); document.body.style.overflow = previousOverflow; };
+    return () => { dialog?.close(); document.body.style.overflow = previous; };
   }, [onClose]);
-  const [mode, setMode] = useState(initialMode);
+  const [mode, setMode] = useState<Mode>(initialMode);
   const [fullName, setFullName] = useState("");
-  const isRegister = mode === "register";
-  function switchMode() { setMode(isRegister ? "login" : "register"); setPassword(""); setShowPassword(false); setMessage(""); }
-  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const [code, setCode] = useState("");
+  const [visible, setVisible] = useState(false);
   const [message, setMessage] = useState("");
+  const [pending, setPending] = useState(false);
+  function switchMode(next: Mode) { setMode(next); setPassword(""); setCode(""); setMessage(""); setVisible(false); }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (pending) return;
     setMessage("");
-
-    if (isRegister && !fullName.trim()) { setMessage("Vui lòng nhập họ và tên."); return; }
-    if (!/^0\d{9}$/.test(phone.trim())) {
-      setMessage("Vui lòng nhập số điện thoại Việt Nam gồm 10 chữ số, bắt đầu bằng 0.");
-      return;
+    const address = email.trim().toLowerCase();
+    if (mode === "register" && (!validPassword(password))) {
+      setMessage("Mật khẩu cần ít nhất 15 ký tự và tối đa 72 byte UTF-8."); return;
     }
-    if (!password) {
-      setMessage("Vui lòng nhập mật khẩu.");
-      return;
-    }
-
-    if (isRegister) {
-      if (password.length < 15) { setMessage("Mật khẩu cần ít nhất 15 ký tự."); return; }
-      setMessage("Đăng ký và xác minh OTP chưa kết nối máy chủ. Chưa có tài khoản nào được tạo.");
-      return;
-    }
-    // TODO: Kết nối POST /auth/login sau khi Backend thống nhất API.
-    // Không lưu mật khẩu/token hoặc thông báo đăng nhập thành công giả.
-    setMessage("Giao diện đã sẵn sàng. Chức năng đăng nhập chưa kết nối máy chủ.");
+    setPending(true);
+    try {
+      if (mode === "register") {
+        const result = await register(fullName.trim(), address, password);
+        setPassword(""); setMode("verify"); setMessage(result.message);
+      } else if (mode === "verify") {
+        const result = await verifyEmail(address, code);
+        setMode("login"); setCode(""); setMessage(result.message);
+      } else {
+        const user = await login(address, password);
+        setPassword(""); setAuthUser(user);
+        if (onSuccess) onSuccess(user);
+        else if (onClose) onClose();
+        else router.push("/");
+      }
+    } catch (error) { setMessage(authError(error)); }
+    finally { setPending(false); }
   }
-
-  const card = (
-      <section className="bl-auth-card" aria-labelledby="login-title">
-        {onClose ? <button type="button" className="bl-auth-close" onClick={onClose} aria-label={isRegister ? "Đóng đăng ký" : "Đóng đăng nhập"}>×</button> : <Link href="/" className="bl-auth-close" aria-label="Đóng đăng nhập, về trang chủ">×</Link>}
-        <h1 id="login-title">{isRegister ? "ĐĂNG KÝ" : "ĐĂNG NHẬP"}</h1>
-
-        <form onSubmit={handleSubmit} noValidate className="bl-auth-form">
-          {isRegister && <div className="bl-auth-field">
-            <label htmlFor="register-name">Họ và tên</label>
-            <input id="register-name" name="fullName" autoComplete="name" value={fullName}
-              placeholder="Nhập họ và tên của bạn" required
-              onChange={(event) => { setFullName(event.target.value); setMessage(""); }} />
-          </div>}
-          <div className="bl-auth-field">
-            <label htmlFor="login-phone">Số điện thoại</label>
-            <input id="login-phone" name="phone" type="tel" inputMode="numeric"
-              autoComplete="tel" value={phone} maxLength={15} required
-              placeholder="Nhập số điện thoại của bạn"
-              onChange={(event) => { setPhone(event.target.value); setMessage(""); }} />
-          </div>
-          <div className="bl-auth-field">
-            <label htmlFor="login-password">Mật khẩu</label>
-            <div className="bl-auth-password">
-              <input id="login-password" name="password"
-                type={showPassword ? "text" : "password"} autoComplete={isRegister ? "new-password" : "current-password"}
-                className="brewlite-password-input" value={password} required
-                placeholder="Nhập mật khẩu của bạn"
-                onChange={(event) => { setPassword(event.target.value); setMessage(""); }} />
-              <button type="button" className="bl-auth-eye"
-                onClick={() => setShowPassword((current) => !current)}
-                aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-                aria-pressed={showPassword}>
-                <EyeIcon hidden={showPassword} />
-              </button>
-            </div>
-          </div>
-          {message && <p role="status" aria-live="polite" className="bl-auth-message">{message}</p>}
-          <button type="submit" className="bl-auth-submit">{isRegister ? "ĐĂNG KÝ" : "ĐĂNG NHẬP"}</button>
-        </form>
-
-        <p className="bl-auth-register">{isRegister ? "Đã có tài khoản? " : "Chưa có tài khoản? "}<button type="button" className="bl-auth-switch" onClick={switchMode}>{isRegister ? "Đăng nhập" : "Đăng ký"}</button></p>
-      </section>
-  );
-  return onClose ? (
-    <dialog ref={dialogRef} className="bl-auth-dialog" aria-labelledby="login-title"
-      onCancel={(event) => { event.preventDefault(); onClose(); }}
-      onClick={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-      {card}
-    </dialog>
-  ) : <main className="bl-auth-page">{card}</main>;
+  async function resend() {
+    if (pending || !email.trim()) return;
+    setPending(true);
+    try { setMessage((await resendOtp(email.trim().toLowerCase())).message); setMode("verify"); setPassword(""); }
+    catch (error) { setMessage(authError(error)); }
+    finally { setPending(false); }
+  }
+  const title = mode === "register" ? "ĐĂNG KÝ" : mode === "verify" ? "XÁC MINH EMAIL" : "ĐĂNG NHẬP";
+  const card = <section className="bl-auth-card" aria-labelledby="login-title">
+    {onClose ? <button type="button" className="bl-auth-close" onClick={onClose} aria-label="Đóng">×</button> : <Link href="/" className="bl-auth-close" aria-label="Về trang chủ">×</Link>}
+    <h1 id="login-title">{title}</h1>
+    <form onSubmit={(event) => { void handleSubmit(event); }} className="bl-auth-form" aria-busy={pending}>
+      {mode === "register" && <div className="bl-auth-field"><label htmlFor="auth-name">Họ và tên</label><input id="auth-name" autoComplete="name" required maxLength={100} value={fullName} onChange={(event) => setFullName(event.target.value)} placeholder="Nhập họ và tên" /></div>}
+      <div className="bl-auth-field"><label htmlFor="auth-email">Email</label><input id="auth-email" type="email" autoComplete="email" required maxLength={254} value={email} onChange={(event) => setEmail(event.target.value)} placeholder="Nhập email của bạn" /></div>
+      {mode !== "verify" && <div className="bl-auth-field"><label htmlFor="auth-password">Mật khẩu</label><div className="bl-auth-password">
+        <input id="auth-password" className="brewlite-password-input" type={visible ? "text" : "password"} autoComplete={mode === "register" ? "new-password" : "current-password"} required value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Nhập mật khẩu của bạn" />
+        <button type="button" className="bl-auth-eye" onClick={() => setVisible((value) => !value)} aria-label={visible ? "Ẩn mật khẩu" : "Hiện mật khẩu"} aria-pressed={visible}><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>{visible && <path d="m3 3 18 18"/>}</svg></button>
+      </div></div>}
+      {mode === "verify" && <div className="bl-auth-field"><label htmlFor="auth-code">Mã OTP trong email</label><input id="auth-code" inputMode="numeric" autoComplete="one-time-code" required pattern="[0-9]{6}" maxLength={6} value={code} onChange={(event) => setCode(event.target.value)} placeholder="Nhập 6 chữ số" /></div>}
+      {message && <p className="bl-auth-message" role="status">{message}</p>}
+      <button type="submit" className="bl-auth-submit" disabled={pending}>{pending ? "ĐANG XỬ LÝ…" : title}</button>
+    </form>
+    {mode === "verify" ? <p className="bl-auth-register"><button type="button" className="bl-auth-switch" disabled={pending} onClick={() => { void resend(); }}>Gửi lại OTP</button> · <button type="button" className="bl-auth-switch" disabled={pending} onClick={() => switchMode("login")}>Đăng nhập</button></p> : <>
+      <p className="bl-auth-register">{mode === "login" ? "Chưa có tài khoản? " : "Đã có tài khoản? "}<button type="button" className="bl-auth-switch" disabled={pending} onClick={() => switchMode(mode === "login" ? "register" : "login")}>{mode === "login" ? "Đăng ký" : "Đăng nhập"}</button></p>
+      {mode === "login" && <p className="bl-auth-register"><button type="button" className="bl-auth-switch" disabled={pending} onClick={() => switchMode("verify")}>Xác minh email / Gửi lại OTP</button></p>}
+    </>}
+  </section>;
+  return onClose ? <dialog ref={dialogRef} className="bl-auth-dialog" aria-labelledby="login-title" onCancel={(event) => { event.preventDefault(); onClose(); }} onClick={(event) => { if (event.target === event.currentTarget) onClose(); }}>{card}</dialog> : <main className="bl-auth-page">{card}</main>;
 }

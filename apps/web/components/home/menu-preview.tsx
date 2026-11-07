@@ -16,7 +16,7 @@ export function MenuPreview() {
   useEffect(() => {
     let active = true;
     getProducts().then((items) => {
-      if (active) setProducts(items.filter((item) => item.isAvailable).slice(0, 4));
+      if (active) setProducts(items.filter((item) => item.isAvailable));
     }).catch(() => { if (active) setError(true); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
@@ -28,10 +28,7 @@ export function MenuPreview() {
         <div className="menu-preview-copy">
           <h2 className="section-title" id="menu-preview-title">Thực đơn đa dạng</h2>
           <div className="menu-category-descriptions">
-            <div><h3>Trà trái cây</h3><p>Tươi mát từ trà và trái cây, mang đến cảm giác thanh nhẹ, sảng khoái.</p></div>
-            <div><h3>Đá xay &amp; Matcha</h3><p>Mát lạnh, mềm mịn, kết hợp hương matcha đặc trưng đầy cuốn hút.</p></div>
-            <div><h3>Trà sữa</h3><p>Vị trà thơm hòa quyện cùng sữa béo mịn, ngọt ngào trong từng ngụm.</p></div>
-            <div><h3>Cà phê</h3><p>Hương vị cà phê đậm đà, thơm nồng, đánh thức năng lượng cho mỗi ngày.</p></div>
+            {Array.from(new Map(products.filter((p) => p.category).map((p) => [p.category!.id, p.category!])).values()).map((category) => <div key={category.id}><h3>{category.name}</h3></div>)}
           </div>
         </div>
         <div className="menu-preview-content" aria-busy={loading}>

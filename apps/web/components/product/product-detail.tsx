@@ -15,9 +15,9 @@ function cheapestSize(sizes: Size[]) {
 }
 
 export function ProductDetailView({ id, editKey }: { id: string; editKey?: string }) {
-  const { addLine, updateLine, lines } = useCart();
+  const { addLine, updateLine, lines, pendingGuest = [], busy, ready } = useCart();
   const router = useRouter();
-  const editingLine = editKey ? lines.find((line) => line.key === editKey && line.productId === id) : undefined;
+  const editingLine = editKey?.startsWith("guest:") ? pendingGuest.find((line) => line.key === editKey.slice(6) && line.productId === id) : editKey ? lines.find((line) => line.key === editKey && line.productId === id) : undefined;
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -60,14 +60,17 @@ export function ProductDetailView({ id, editKey }: { id: string; editKey?: strin
     () => (product?.availableToppings ?? []).filter((topping) => topping.isAvailable && toppingIds.includes(topping.id)),
     [product, toppingIds],
   );
-  const soldOut = !product || !product.isAvailable || product.stockQuantity < 1;
+  const soldOut = !product || !product.isAvailable || !size || size.isAvailable === false || size.onHand == null || size.onHand - (size.reserved ?? 0) < quantity;
+  const invalidToppings = toppingIds.filter((selected) => !product?.availableToppings.some((item) => item.id === selected && item.isAvailable));
 
   const unitPrice = product
     ? parsePrice(product.basePrice) + (size ? parsePrice(size.extraPrice) : 0) + toppings.reduce((sum, topping) => sum + parsePrice(topping.price), 0)
     : 0;
 
-  function addToCart() {
+  async function addToCart() {
+    if (!Number.isInteger(quantity) || quantity < MIN_LINE_QUANTITY || quantity > MAX_LINE_QUANTITY) { setFormError("Số lượng phải là số nguyên từ 1 đến 20; vui lòng nhập lại."); return; }
     if (!product || soldOut) return;
+    if (invalidToppings.length) { setFormError("Có topping không còn khả dụng. Vui lòng tự bỏ chọn hoặc chọn lại trước khi lưu."); return; }
     if (product.sizes.length > 0 && !size) {
       setFormError("Hãy chọn một size của món này.");
       return;
@@ -85,12 +88,12 @@ export function ProductDetailView({ id, editKey }: { id: string; editKey?: strin
       note: note.trim(),
     };
     if (editKey) {
-      if (!updateLine(editKey, configured)) {
+      if (!(await updateLine(editKey, configured))) {
         setFormError("Không thể lưu: món đã bị xóa hoặc cấu hình trùng vượt quá 20 ly.");
         return;
       }
       router.push("/cart");
-    } else addLine(configured);
+    } else await addLine(configured);
   }
 
   function toggleTopping(topping: Topping) {
@@ -178,7 +181,7 @@ export function ProductDetailView({ id, editKey }: { id: string; editKey?: strin
                     <button type="button" aria-label="Giảm số lượng" onClick={() => setQuantity((value) => Math.max(MIN_LINE_QUANTITY, value - 1))}>−</button>
                     <input id="quantity" inputMode="numeric" value={quantity} onChange={(event) => {
                       const next = Number(event.target.value);
-                      if (Number.isInteger(next)) setQuantity(Math.min(MAX_LINE_QUANTITY, Math.max(MIN_LINE_QUANTITY, next)));
+                      if (Number.isInteger(next)) setQuantity(next);
                     }} />
                     <button type="button" aria-label="Tăng số lượng" onClick={() => setQuantity((value) => Math.min(MAX_LINE_QUANTITY, value + 1))}>+</button>
                   </div>
@@ -188,8 +191,11 @@ export function ProductDetailView({ id, editKey }: { id: string; editKey?: strin
                 <textarea id="note" className="field-textarea" maxLength={200} value={note} onChange={(event) => setNote(event.target.value)} placeholder="Ví dụ: ít đá" />
 
                 <div className="cart-total"><span>Tạm tính</span><span className="amt">{formatPrice(lineTotal(unitPrice, quantity))}đ</span></div>
+                {invalidToppings.map((selected) => <label key={selected}><input type="checkbox" checked onChange={() => setToppingIds((ids) => ids.filter((value) => value !== selected))} />{editingLine?.toppings.find((item) => item.id === selected)?.name ?? "Topping đã chọn"} (không còn khả dụng, cần bỏ chọn)</label>)}
+                {size?.onHand === null && <p role="status">Chưa nhập tồn kho</p>}
                 {formError && <p role="alert">{formError}</p>}
-                <button type="button" className="add-bag" disabled={soldOut} onClick={addToCart}>
+                {editKey && !editingLine && ready !== false && <p role="alert">Món cần sửa không còn trong giỏ. Vui lòng mở lại giỏ hàng.</p>}
+                <button type="button" className="add-bag" disabled={soldOut || busy || ready === false || (!!editKey && !editingLine)} onClick={addToCart}>
                   {soldOut ? "Món không khả dụng" : editKey ? "Lưu thay đổi" : "Thêm vào giỏ hàng"}
                 </button>
               </div>

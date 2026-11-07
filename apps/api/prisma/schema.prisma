@@ -11,6 +11,7 @@ datasource db {
 }
 
 enum UserRole {
+  ADMIN
   CUSTOMER
   STAFF
   MANAGER
@@ -42,6 +43,7 @@ enum PaymentMethod {
 }
 
 enum PaymentStatus {
+  UNKNOWN
   PENDING
   SUCCESS
   FAILED
@@ -53,15 +55,22 @@ enum DiscountType {
 }
 
 model User {
-  id                  String               @id @default(uuid())
-  fullName            String
-  email               String               @unique
-  phone               String?
-  passwordHash        String
-  role                UserRole             @default(CUSTOMER)
-  loyaltyPoints       Int                  @default(0)
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
+  id                String               @id @default(uuid())
+  fullName          String
+  email             String               @unique
+  phone             String?
+  emailVerifiedAt   DateTime?
+  isActive          Boolean              @default(true)
+  authSessions      AuthSession[]
+  emailVerification EmailVerification?
+  passwordHash      String
+  role              UserRole             @default(CUSTOMER)
+  reservedPoints    Int                  @default(0)
+  statusChanges     OrderStatusHistory[]
+  requests          IdempotencyRecord[]
+  loyaltyPoints     Int                  @default(0)
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
 
   orders              Order[]
   cart                Cart?
@@ -72,6 +81,8 @@ model User {
 }
 
 model LoyaltyTransaction {
+  orderId      String?
+  order        Order?                 @relation(fields: [orderId], references: [id], onDelete: Restrict)
   id           String                 @id @default(uuid())
   userId       String
   user         User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -82,10 +93,14 @@ model LoyaltyTransaction {
   role         UserRole
   createdAt    DateTime               @default(now())
 
+  @@unique([orderId, type])
   @@map("loyalty_transactions")
 }
 
 model Notification {
+  orderId   String?
+  order     Order?           @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  eventKey  String?          @unique
   id        String           @id @default(uuid())
   userId    String
   user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -99,6 +114,7 @@ model Notification {
 }
 
 model Category {
+  isActive Boolean   @default(true)
   id       String    @id @default(uuid())
   name     String    @unique
   products Product[]
@@ -107,45 +123,54 @@ model Category {
 }
 
 model Product {
-  id            String      @id @default(uuid())
+  id            String    @id @default(uuid())
   categoryId    String?
-  category      Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  category      Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   name          String
   description   String?
-  basePrice     Decimal     @db.Decimal(10, 2)
+  basePrice     Decimal   @db.Decimal(10, 2)
   imageUrl      String?
-  stockQuantity Int         @default(100)
-  isAvailable   Boolean     @default(true)
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  stockQuantity Int       @default(100)
+  isAvailable   Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
-  sizes         Size[]
-  orderItems    OrderItem[]
-  cartItems     CartItem[]
+  sizes      Size[]
+  orderItems OrderItem[]
+  cartItems  CartItem[]
 
   @@map("products")
 }
 
 model Size {
-  id         String   @id @default(uuid())
-  productId  String?
-  product    Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
-  name       String
-  extraPrice Decimal  @default(0) @db.Decimal(10, 2)
+  onHand      Int?
+  reserved    Int         @default(0)
+  isAvailable Boolean     @default(true)
+  version     Int         @default(0)
+  cartItems   CartItem[]
+  orderItems  OrderItem[]
+  id          String      @id @default(uuid())
+  productId   String
+  product     Product     @relation(fields: [productId], references: [id], onDelete: Restrict)
+  name        String
+  extraPrice  Decimal     @default(0) @db.Decimal(10, 2)
 
+  @@unique([id, productId])
   @@map("sizes")
 }
 
 model Topping {
-  id          String   @id @default(uuid())
-  name        String   @unique
-  price       Decimal  @db.Decimal(10, 2)
-  isAvailable Boolean  @default(true)
+  cartSelections CartItemTopping[]
+  id             String            @id @default(uuid())
+  name           String            @unique
+  price          Decimal           @db.Decimal(10, 2)
+  isAvailable    Boolean           @default(true)
 
   @@map("toppings")
 }
 
 model Cart {
+  version   Int        @default(0)
   id        String     @id @default(uuid())
   userId    String?    @unique
   user      User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -157,53 +182,75 @@ model Cart {
 }
 
 model CartItem {
-  id        String   @id @default(uuid())
-  cartId    String
-  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
-  productId String
-  product   Product  @relation(fields: [productId], references: [id])
-  quantity  Int      @default(1)
-  note      String?
+  sizeId                String?
+  size                  Size?             @relation(fields: [sizeId, productId], references: [id, productId], onDelete: Restrict, onUpdate: Restrict)
+  configurationKey      String?
+  requiresConfiguration Boolean           @default(true)
+  toppings              CartItemTopping[]
+  id                    String            @id @default(uuid())
+  cartId                String
+  cart                  Cart              @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productId             String
+  product               Product           @relation(fields: [productId], references: [id])
+  quantity              Int               @default(1)
+  note                  String?
 
+  @@unique([cartId, configurationKey])
+  @@index([sizeId])
   @@map("cart_items")
 }
 
 model Order {
-  id             String      @id @default(uuid())
-  orderCode      String      @unique
-  userId         String?
-  user           User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
-  status         OrderStatus @default(PENDING_PAYMENT)
-  subtotal       Decimal     @db.Decimal(10, 2)
-  discountAmount Decimal     @default(0) @db.Decimal(10, 2)
-  pointsUsed     Int         @default(0)
-  pointsDiscount Decimal     @default(0) @db.Decimal(10, 2)
-  finalTotal     Decimal     @db.Decimal(10, 2)
-  note           String?
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
+  isLegacy           Boolean              @default(true)
+  expiresAt          DateTime?
+  version            Int                  @default(0)
+  promotionId        String?
+  promotion          Promotion?           @relation(fields: [promotionId], references: [id], onDelete: Restrict)
+  couponCodeSnapshot String?
+  reservation        OrderReservation?
+  history            OrderStatusHistory[]
+  transactions       LoyaltyTransaction[]
+  notifications      Notification[]
+  id                 String               @id @default(uuid())
+  orderCode          String               @unique
+  userId             String?
+  user               User?                @relation(fields: [userId], references: [id], onDelete: SetNull)
+  status             OrderStatus          @default(PENDING_PAYMENT)
+  subtotal           Decimal              @db.Decimal(10, 2)
+  discountAmount     Decimal              @default(0) @db.Decimal(10, 2)
+  pointsUsed         Int                  @default(0)
+  pointsDiscount     Decimal              @default(0) @db.Decimal(10, 2)
+  finalTotal         Decimal              @db.Decimal(10, 2)
+  note               String?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
 
-  items          OrderItem[]
-  payments       Payment[]
+  items    OrderItem[]
+  payments Payment[]
 
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
   @@map("orders")
 }
 
 model OrderItem {
-  id          String             @id @default(uuid())
+  sizeId      String?
+  size        Size?   @relation(fields: [sizeId, productId], references: [id, productId], onDelete: Restrict, onUpdate: Restrict)
+  id          String  @id @default(uuid())
   orderId     String
-  order       Order              @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   productId   String
-  product     Product            @relation(fields: [productId], references: [id])
+  product     Product @relation(fields: [productId], references: [id])
   productName String
   sizeName    String?
-  unitPrice   Decimal            @db.Decimal(10, 2)
+  unitPrice   Decimal @db.Decimal(10, 2)
   quantity    Int
-  lineTotal   Decimal            @db.Decimal(10, 2)
+  lineTotal   Decimal @db.Decimal(10, 2)
   note        String?
 
-  toppings    OrderItemTopping[]
+  toppings OrderItemTopping[]
 
+  @@index([sizeId])
   @@map("order_items")
 }
 
@@ -218,22 +265,29 @@ model OrderItemTopping {
 }
 
 model Payment {
-  id             String        @id @default(uuid())
-  orderId        String
-  order          Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  amount         Decimal       @db.Decimal(10, 2)
-  method         PaymentMethod
-  status         PaymentStatus @default(PENDING)
-  idempotencyKey String?       @unique
-  transactionRef String?
-  failureReason  String?
-  createdAt      DateTime      @default(now())
-  paidAt         DateTime?
+  attemptNumber     Int?
+  providerPaymentId String?        @unique
+  resolvedAt        DateTime?
+  events            PaymentEvent[]
+  id                String         @id @default(uuid())
+  orderId           String
+  order             Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  amount            Decimal        @db.Decimal(10, 2)
+  method            PaymentMethod
+  status            PaymentStatus  @default(PENDING)
+  idempotencyKey    String?        @unique
+  transactionRef    String?
+  failureReason     String?
+  createdAt         DateTime       @default(now())
+  paidAt            DateTime?
 
+  @@unique([orderId, attemptNumber])
   @@map("payments")
 }
 
 model Promotion {
+  reservedCount Int          @default(0)
+  orders        Order[]
   id            String       @id @default(uuid())
   code          String       @unique
   discountType  DiscountType
@@ -248,4 +302,120 @@ model Promotion {
   createdAt     DateTime     @default(now())
 
   @@map("promotions")
+}
+
+model EmailVerification {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeHash  String
+  expiresAt DateTime
+  attempts  Int      @default(0)
+  sentAt    DateTime @default(now())
+}
+
+model AuthSession {
+  familyId         String?
+  refreshTokenHash String?      @unique
+  refreshUsedAt    DateTime?
+  parentId         String?      @unique
+  parent           AuthSession? @relation("SessionRotation", fields: [parentId], references: [id])
+  child            AuthSession? @relation("SessionRotation")
+  id               String       @id @default(uuid())
+  userId           String
+  user             User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt        DateTime
+  revokedAt        DateTime?
+  createdAt        DateTime     @default(now())
+
+  @@index([userId])
+}
+
+enum ReservationState {
+  HELD
+  CONSUMED
+  RELEASED
+}
+
+model CartItemTopping {
+  cartItemId String
+  cartItem   CartItem @relation(fields: [cartItemId], references: [id], onDelete: Cascade)
+  toppingId  String
+  topping    Topping  @relation(fields: [toppingId], references: [id], onDelete: Restrict)
+
+  @@id([cartItemId, toppingId])
+  @@index([toppingId])
+}
+
+model OrderReservation {
+  id             String           @id @default(uuid())
+  orderId        String           @unique
+  order          Order            @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  state          ReservationState @default(HELD)
+  pointsReserved Int              @default(0)
+  createdAt      DateTime?
+  updatedAt      DateTime?        @updatedAt
+  expiresAt      DateTime
+  consumedAt     DateTime?
+  releasedAt     DateTime?
+
+  @@index([state, expiresAt])
+}
+
+model OrderStatusHistory {
+  id           String       @id @default(uuid())
+  orderId      String
+  order        Order        @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  actorId      String?
+  actor        User?        @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  fromStatus   OrderStatus?
+  toStatus     OrderStatus
+  orderVersion Int
+  createdAt    DateTime     @default(now())
+
+  @@unique([orderId, orderVersion])
+  @@index([actorId])
+}
+
+model IdempotencyRecord {
+  id               String                      @id @default(uuid())
+  actorId          String
+  actor            User                        @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  operation        String
+  key              String
+  processingStatus IdempotencyProcessingStatus @default(SUCCEEDED)
+  requestHash      String
+  result           Json
+  createdAt        DateTime                    @default(now())
+  expiresAt        DateTime
+
+  @@unique([actorId, operation, key])
+  @@index([expiresAt])
+}
+
+model PaymentEvent {
+  id               String                       @id @default(uuid())
+  paymentId        String
+  payment          Payment                      @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+  providerEventId  String                       @unique
+  outcome          PaymentStatus
+  amount           Decimal                      @db.Decimal(10, 2)
+  receivedAt       DateTime                     @default(now())
+  processedAt      DateTime?
+  processingStatus PaymentEventProcessingStatus @default(RECEIVED)
+  metadata         Json?
+
+  @@index([paymentId, receivedAt])
+}
+
+enum IdempotencyProcessingStatus {
+  IN_PROGRESS
+  SUCCEEDED
+  FAILED
+}
+
+enum PaymentEventProcessingStatus {
+  RECEIVED
+  PROCESSED
+  REQUIRES_REVIEW
 }

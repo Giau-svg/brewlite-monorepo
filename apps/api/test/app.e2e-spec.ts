@@ -8,6 +8,9 @@ describe('AppController (e2e)', () => {
   let app: INestApplication<App>;
 
   beforeEach(async () => {
+    const testUrl = process.env.AUTH_TEST_DATABASE_URL;
+    if (!testUrl || !new URL(testUrl).searchParams.get('schema')?.startsWith('brewlite_auth_test_')) throw new Error('Use npm run test:e2e with its isolated schema runner.');
+    process.env.DATABASE_URL = testUrl;
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();

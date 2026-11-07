@@ -1,6 +1,7 @@
 import { afterEach, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { CartProvider, useCart } from "../components/cart/cart-provider";
+vi.mock("../lib/auth-store", () => ({ useAuthUser: () => null, useAuthStatus: () => ({ ready: true, error: null }), refreshAuth: vi.fn() }));
 
 function CartControls() {
   const cart = useCart();

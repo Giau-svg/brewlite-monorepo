@@ -1,3 +1,6 @@
+import 'dotenv/config';
+import cookieParser from 'cookie-parser';
+import { allowedOrigins } from './auth/auth.config';
 
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
@@ -7,8 +10,10 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // Cho phép Frontend (Next.js :3000) gọi API
+  app.use(cookieParser());
   app.enableCors({
-    origin: ['http://localhost:3000', 'http://localhost:3001'],
+    origin: allowedOrigins(),
+    credentials: true,
   });
 
   // Tự động validate DTO đầu vào (dùng ở Sprint 2 cho Auth, Orders...)

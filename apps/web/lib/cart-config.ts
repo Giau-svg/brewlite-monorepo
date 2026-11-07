@@ -18,13 +18,16 @@ export type CartLine = {
   quantity: number;
   unitPrice: number;
   note: string;
+  requiresConfiguration?: boolean;
+  isValid?: boolean;
+  issues?: { code: string; message: string }[];
 };
 
 export type NewCartLine = Omit<CartLine, "key" | "quantity"> & { quantity: number };
 
 export function configurationKey(productId: string, sizeId: string | null, toppingIds: string[], note: string) {
   const toppings = [...toppingIds].sort().join(",");
-  return [productId, sizeId ?? "", toppings, note.trim()].join("|");
+  return JSON.stringify([productId, sizeId ?? "", toppings, note.replace(/\r\n/g, "\n").trim()]);
 }
 
 export function clampQuantity(quantity: number) {
@@ -37,6 +40,7 @@ export function lineTotal(unitPrice: number, quantity: number) {
 }
 
 export function addConfiguredLine(lines: CartLine[], incoming: NewCartLine) {
+  if (!Number.isInteger(incoming.quantity) || incoming.quantity < 1 || incoming.quantity > MAX_LINE_QUANTITY) return { lines, capped: true };
   const key = configurationKey(
     incoming.productId,
     incoming.sizeId,
@@ -52,6 +56,7 @@ export function addConfiguredLine(lines: CartLine[], incoming: NewCartLine) {
     };
   }
   const combined = existing.quantity + quantity;
+  if (combined > MAX_LINE_QUANTITY) return { lines, capped: true };
   const nextQuantity = Math.min(MAX_LINE_QUANTITY, combined);
   return {
     lines: lines.map((line) => line.key === key ? { ...line, quantity: nextQuantity, unitPrice: incoming.unitPrice } : line),
@@ -60,6 +65,7 @@ export function addConfiguredLine(lines: CartLine[], incoming: NewCartLine) {
 }
 
 export function changeLineQuantity(lines: CartLine[], key: string, quantity: number) {
+  if (quantity > MAX_LINE_QUANTITY) return lines;
   if (!Number.isInteger(quantity) || quantity < MIN_LINE_QUANTITY) {
     return lines.filter((line) => line.key !== key);
   }

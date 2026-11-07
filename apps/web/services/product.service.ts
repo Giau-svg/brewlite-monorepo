@@ -21,7 +21,9 @@ function isProduct(value: unknown): value is Product {
       Array.isArray(value.sizes) && value.sizes.every((size) => {
         if (!isRecord(size)) return false;
         parsePrice(size.extraPrice);
-        return typeof size.id === "string" && nullableString(size.productId) && typeof size.name === "string";
+                const stockValid = size.onHand === null || (Number.isInteger(size.onHand) && Number(size.onHand) >= 0);
+        const heldValid = (Number.isInteger(size.reserved) && Number(size.reserved) >= 0);
+        return typeof size.id === "string" && nullableString(size.productId) && typeof size.name === "string" && stockValid && heldValid && typeof size.isAvailable === "boolean" && Number.isInteger(size.version) && ["UNINITIALIZED", "AVAILABLE", "OUT_OF_STOCK"].includes(String(size.inventoryStatus)) && (size.availableQuantity === null || (Number.isInteger(size.availableQuantity) && Number(size.availableQuantity) >= 0));
       });
   } catch {
     return false;

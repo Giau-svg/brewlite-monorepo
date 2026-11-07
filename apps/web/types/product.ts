@@ -7,6 +7,12 @@ export type Size = {
   productId: string | null;
   name: string;
   extraPrice: DecimalPrice;
+  onHand: number | null;
+  reserved: number;
+  isAvailable: boolean;
+  version: number;
+  availableQuantity: number | null;
+  inventoryStatus: 'UNINITIALIZED' | 'AVAILABLE' | 'OUT_OF_STOCK';
 };
 
 export type Topping = {

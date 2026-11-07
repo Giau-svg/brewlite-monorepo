@@ -26,11 +26,11 @@ describe("configured cart lines", () => {
     expect(otherSize.lines).toHaveLength(2);
   });
 
-  it("caps a line at 20 and removes it when quantity drops below 1", () => {
+  it("rejects an overflow without silently cutting quantity and removes an explicitly deleted line", () => {
     const capped = addConfiguredLine([], line({ quantity: 18 }));
     const overflow = addConfiguredLine(capped.lines, line({ quantity: 5 }));
     expect(overflow.capped).toBe(true);
-    expect(overflow.lines[0].quantity).toBe(20);
+    expect(overflow.lines[0].quantity).toBe(18);
     expect(lineTotal(44000, 20)).toBe(880000);
     expect(changeLineQuantity(overflow.lines, overflow.lines[0].key, 0)).toEqual([]);
   });

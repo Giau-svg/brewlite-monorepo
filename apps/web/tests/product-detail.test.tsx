@@ -5,6 +5,7 @@ import { ProductDetailView } from "../components/product/product-detail";
 import { makeProduct } from "./product-fixture";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }), usePathname: () => "/products/test" }));
+vi.mock("../lib/auth-store", () => ({ useAuthUser: () => null, useAuthStatus: () => ({ ready: true, error: null }), refreshAuth: vi.fn() }));
 
 Object.defineProperty(HTMLDialogElement.prototype, "showModal", { configurable: true, value: function (this: HTMLDialogElement) { this.setAttribute("open", ""); } });
 Object.defineProperty(HTMLDialogElement.prototype, "close", { configurable: true, value: function (this: HTMLDialogElement) { this.removeAttribute("open"); } });
@@ -22,8 +23,8 @@ const detail = {
     basePrice: "45000",
     category: { id: "cat", name: "Cà phê" },
     sizes: [
-      { id: "size-m", productId: "11111111-1111-4111-8111-111111111111", name: "M", extraPrice: "0" },
-      { id: "size-l", productId: "11111111-1111-4111-8111-111111111111", name: "L", extraPrice: "6000" },
+      { id: "size-m", productId: "11111111-1111-4111-8111-111111111111", name: "M", extraPrice: "0", onHand: 10, reserved: 0, isAvailable: true, version: 0, availableQuantity: 10, inventoryStatus: "AVAILABLE" },
+      { id: "size-l", productId: "11111111-1111-4111-8111-111111111111", name: "L", extraPrice: "6000", onHand: 10, reserved: 0, isAvailable: true, version: 0, availableQuantity: 10, inventoryStatus: "AVAILABLE" },
     ],
   }),
   availableToppings: [{ id: "top-1", name: "Trân châu", price: "5000", isAvailable: true }],

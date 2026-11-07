@@ -1,6 +1,6 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import Home from "../app/page";
+import { MenuCatalog as Home } from "../components/menu/menu-catalog";
 import { makeProduct } from "./product-fixture";
 
 beforeEach(() => {

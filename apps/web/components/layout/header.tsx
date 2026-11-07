@@ -3,6 +3,8 @@
 import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import LoginForm from "../auth/login-form";
+import { useAuthUser, setAuthUser } from "../../lib/auth-store";
+import { authError, logout } from "../../services/auth.service";
 import { usePathname } from "next/navigation";
 import { setMenuQuery, useMenuView } from "../../lib/menu-view";
 
@@ -25,6 +27,9 @@ function BrandMark() {
 }
 
 function AccountMenu() {
+  const user = useAuthUser();
+  const [authMessage, setAuthMessage] = useState("");
+  const [loggingOut, setLoggingOut] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const menuId = useId();
@@ -100,8 +105,22 @@ function AccountMenu() {
       {open && (
         <div className="account-drop">
           <div className="account-panel" id={menuId} role="menu" aria-label="Tài khoản">
-            <Link href="/login" role="menuitem" onClick={(event) => { event.preventDefault(); setHover(false); setPinned(false); setAuthMode("login"); setLoginOpen(true); }}>Đăng nhập</Link>
-            <button type="button" role="menuitem" onClick={() => { setHover(false); setPinned(false); setAuthMode("register"); setLoginOpen(true); }}>Đăng ký</button>
+            {user ? <>
+              <p className="account-user">{user.fullName}<br /><small>{user.email}</small></p>
+              {user.role === "CUSTOMER" && <Link href="/account" role="menuitem">Điểm thưởng và thông báo</Link>}
+              {user.role === "STAFF" && <Link href="/staff/orders" role="menuitem">Đơn cần phục vụ</Link>}
+              {user.role === "ADMIN" && <Link href="/admin" role="menuitem">Quản trị</Link>}
+              <button type="button" role="menuitem" disabled={loggingOut} onClick={async () => {
+                setLoggingOut(true); setAuthMessage("");
+                try { await logout(); setAuthUser(null); setHover(false); setPinned(false); }
+                catch (error) { setAuthMessage(authError(error)); }
+                finally { setLoggingOut(false); }
+              }}>Đăng xuất</button>
+            </> : <>
+              <Link href="/login" role="menuitem" onClick={(event) => { event.preventDefault(); setHover(false); setPinned(false); setAuthMode("login"); setLoginOpen(true); }}>Đăng nhập</Link>
+              <button type="button" role="menuitem" onClick={() => { setHover(false); setPinned(false); setAuthMode("register"); setLoginOpen(true); }}>Đăng ký</button>
+            </>}
+            {authMessage && <p role="alert">{authMessage}</p>}
           </div>
         </div>
       )}
@@ -129,7 +148,7 @@ function HeaderSearch() {
     </form>
   );
 }
-export function Header() {
+export function Header({ cartCount = 0 }: { cartCount?: number }) {
   const pathname = usePathname() ?? "";
   const [open, setOpen] = useState(false);
 
@@ -156,6 +175,7 @@ export function Header() {
                     onClick={() => setOpen(false)}
                   >
                     {link.label}
+                    {link.href === "/cart" && cartCount > 0 && <span className="cart-count" aria-label={`${cartCount} ly`}> ({cartCount})</span>}
                   </Link>
                 </li>
               ))}

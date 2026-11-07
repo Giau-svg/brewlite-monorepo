@@ -4,14 +4,14 @@ import { getProducts } from "../services/product.service";
 import { ProductCard } from "../components/menu/product-card";
 import { formatPrice } from "../lib/format-price";
 import { makeProduct } from "./product-fixture";
-import Home from "../app/page";
+import { MenuCatalog as Home } from "../components/menu/menu-catalog";
 
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.unstubAllEnvs(); });
 
 describe("API compatibility", () => {
   it.each(["http://localhost:3001", "http://localhost:3001/", "http://localhost:3001/api", "http://localhost:3001/api/"])("normalizes %s without duplicating api", async (base) => {
     vi.stubEnv("NEXT_PUBLIC_API_URL", base);
-    const products = [makeProduct({ categoryId: "category-id", category: { id: "category-id", name: "Coffee" }, sizes: [{ id: "size-id", productId: "11111111-1111-4111-8111-111111111111", name: "M", extraPrice: "6000" }] })];
+    const products = [makeProduct({ categoryId: "category-id", category: { id: "category-id", name: "Coffee" }, sizes: [{ id: "size-id", productId: "11111111-1111-4111-8111-111111111111", name: "M", extraPrice: "6000", onHand: 10, reserved: 0, version: 0, isAvailable: true, availableQuantity: 10, inventoryStatus: "AVAILABLE" }] })];
     const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => products });
     vi.stubGlobal("fetch", fetchMock);
     expect(await getProducts()).toEqual(products);

@@ -1606,3 +1606,22 @@ html { scroll-padding-top: 100px; }
 .checkout-review-heading { text-align: center; }
 .checkout-review-heading .crumbs { justify-content: center; }
 .checkout-review-heading h1 { margin-inline: auto; }
+.cart-success-actions button { flex: 1; min-width: 0; text-align: center; border: 1px solid #000; border-radius: 999px; padding: 12px; color: #000; background: #fff; font: inherit; font-size: 20px; cursor: pointer; }
+.purchase-panel { padding: 36px; font-size: 22px; }
+.purchase-panel h2 { font-size: 32px; margin-bottom: 24px; }
+.purchase-panel label { display: block; margin-top: 16px; }
+.purchase-panel input { width: 100%; border: 1px solid #aaa; padding: 12px; margin: 8px 0 18px; border-radius: 8px; font: inherit; }
+.purchase-close { float: right; background: none; border: 0; font-size: 36px; cursor: pointer; }
+.account-user { padding: 12px; overflow-wrap: anywhere; }
+.bl-auth-submit:disabled, .bl-auth-switch:disabled { opacity: .5; cursor: wait; }
+.store-workspace { font-size: 1.1rem; }
+.store-order { padding: 1.5rem; margin: 1.5rem 0; border: 1px solid #ddd; border-radius: 12px; }
+.store-order li { padding: .6rem 0; }
+.store-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.store-workspace button { padding: .65rem 1rem; border: 1px solid #111; border-radius: 8px; background: #111; color: white; cursor: pointer; }
+.store-workspace button:disabled { opacity: .5; cursor: not-allowed; }.admin-table { overflow-x: auto; margin: 24px 0; }
+.admin-table table { width: 100%; border-collapse: collapse; text-align: left; }
+.admin-table td, .admin-table th { padding: 12px; border-bottom: 1px solid #ddd; vertical-align: top; }
+.admin-form { max-width: 760px; margin: 30px auto; padding: 24px; border: 1px solid #ddd; }
+.admin-form label { display: block; margin: 16px 0; font-weight: 600; }
+.admin-form input:not([type=checkbox]), .admin-form textarea, .admin-form select, .admin-table input { display: block; padding: 10px; border: 1px solid #aaa; border-radius: 6px; width: 100%; font: inherit; }

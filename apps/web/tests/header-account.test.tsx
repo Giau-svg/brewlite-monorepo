@@ -12,10 +12,10 @@ describe("header account menu", () => {
     expect(nav.getByRole("link", { name: "THỰC ĐƠN" }).getAttribute("href")).toBe("/menu");
     expect(nav.getByRole("link", { name: "GIỎ HÀNG" }).getAttribute("href")).toBe("/cart");
     expect(nav.getByRole("link", { name: "LỊCH SỬ MUA HÀNG" }).getAttribute("href")).toBe("/orders");
-    expect(nav.getByRole("button", { name: "Tìm đồ uống" }).getAttribute("aria-expanded")).toBe("false");
+    expect(nav.getByRole("searchbox", { name: "Tìm đồ uống" })).toBeTruthy();
     expect(screen.queryByRole("menu", { name: "Tài khoản" })).toBeNull();
 
-    const account = screen.getByRole("button", { name: "Người dùng" });
+    const account = screen.getByRole("button", { name: "Tài khoản" });
     fireEvent.mouseEnter(account.parentElement!);
     let menu = screen.getByRole("menu", { name: "Tài khoản" });
     expect(within(menu).getByRole("menuitem", { name: "Đăng nhập" }).getAttribute("href")).toBe("/login");

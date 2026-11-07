@@ -1,3 +1,4 @@
+import { PwaRegistration } from '../components/layout/pwa-registration';
 import type { Metadata } from "next";
 import { DM_Sans, Fraunces } from "next/font/google";
 import "./globals.css";
@@ -25,7 +26,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="vi" className={`${fraunces.variable} ${dmSans.variable}`}>
-      <body>{children}</body>
+      <body><PwaRegistration />{children}</body>
     </html>
   );
 }
