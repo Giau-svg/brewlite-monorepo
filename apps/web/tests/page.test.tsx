@@ -1,6 +1,7 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import Home from "../app/page";
+import { makeProduct } from "./product-fixture";
 
 beforeEach(() => {
   vi.stubEnv("NEXT_PUBLIC_API_URL", "http://localhost:3001");
@@ -23,13 +24,13 @@ describe("menu", () => {
   it("renders the product name and price returned by the API", async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => [{ id: 1, name: "Latte", price: 39000, image: "☕" }],
+      json: async () => [makeProduct()],
     });
     vi.stubGlobal("fetch", fetchMock);
     render(<Home />);
     expect(await screen.findByRole("heading", { name: "Latte" })).toBeDefined();
     expect(screen.getByText(`${(39000).toLocaleString("vi-VN")}đ`)).toBeDefined();
-    expect(fetchMock).toHaveBeenCalledWith("http://localhost:3001/products");
+    expect(fetchMock).toHaveBeenCalledWith("http://localhost:3001/api/products");
     expect(screen.queryByText("Đang tải menu...")).toBeNull();
   });
 
@@ -39,7 +40,7 @@ describe("menu", () => {
     vi.stubGlobal("fetch", fetchMock);
     render(<Home />);
     await screen.findByText("Hiện chưa có thức uống nào.");
-    expect(fetchMock).toHaveBeenCalledWith("https://api.example.test/products");
+    expect(fetchMock).toHaveBeenCalledWith("https://api.example.test/api/products");
   });
 
   it("shows an empty state for an empty catalog", async () => {
@@ -63,8 +64,8 @@ describe("menu", () => {
 describe("catalog search and retry", () => {
   it("filters names without case or accent sensitivity and restores results on clear", async () => {
     const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => [
-      { id: 1, name: "Cà phê sữa", price: 29000, image: "☕" },
-      { id: 2, name: "Trà đào", price: 35000, image: "🍑" },
+      makeProduct({ name: "Cà phê sữa", basePrice: "29000" }),
+      makeProduct({ id: "11111111-1111-4111-8111-111111111112", name: "Trà đào", basePrice: "35000" }),
     ] });
     vi.stubGlobal("fetch", fetchMock);
     render(<Home />);
@@ -92,7 +93,7 @@ describe("catalog search and retry", () => {
     expect(screen.getByText("Đang tải menu...")).toBeDefined();
     expect(screen.queryByRole("button", { name: "Thử tải lại" })).toBeNull();
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
-    resolveRequest({ ok: true, json: async () => [{ id: 1, name: "Latte", price: 39000, image: "🥛" }] });
+    resolveRequest({ ok: true, json: async () => [makeProduct()] });
     expect(await screen.findByRole("heading", { name: "Latte" })).toBeDefined();
   });
 

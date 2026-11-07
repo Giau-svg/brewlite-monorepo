@@ -37,6 +37,6 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 ## Backend configuration
 
-Copy `.env.example` to `.env.local` in `apps/web` and set `NEXT_PUBLIC_API_URL` to the NestJS base URL (local: `http://localhost:3001`). Restart the development server after changes. This URL is public and bundled during production builds, so configure it before `npm run build`. The menu keeps its existing error state if the URL is missing or the API cannot be reached.
+Copy `.env.example` to `.env.local` in `apps/web` and set `NEXT_PUBLIC_API_URL` to the NestJS origin (`http://localhost:3001`) or API base (`http://localhost:3001/api`). Both forms support a trailing slash; the service requests `/api/products` without duplicating `/api`. Restart the development server after changes. This URL is public and bundled during production builds, so configure it before `npm run build`. The menu keeps its existing error state if the URL is missing, the response is invalid or the API cannot be reached.
 
-Product images can be stored in `public/images/products/` when real image assets are available. The current API returns emoji in `image`; the UI preserves this response.
+The current API uses UUID strings, `basePrice` (Prisma Decimal JSON string or numeric JSON), and nullable `imageUrl`. Prices are validated before formatting as VND. Cards use a fallback when the image is missing, invalid or fails to load. No detail route is linked yet.
