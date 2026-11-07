@@ -24,3 +24,9 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Ẩn biểu tượng con mắt mặc định của Microsoft Edge */
+.profile-password-input::-ms-reveal,
+.profile-password-input::-ms-clear {
+  display: none !important;
+}
